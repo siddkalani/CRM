@@ -3,7 +3,11 @@ import { View, Text, TextInput, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const CustomHeader = ({ title = 'Home' }) => {
+const CustomHeader = ({
+  navigation,
+  title = 'Home',
+  showBackButton = false, // <-- new prop to control Back Button
+}) => {
   const [searchMode, setSearchMode] = useState(false);
   const [searchText, setSearchText] = useState('');
 
@@ -11,15 +15,15 @@ const CustomHeader = ({ title = 'Home' }) => {
   const insets = useSafeAreaInsets();
 
   return (
-    <SafeAreaView
-      className="bg-blue-500"
-    >
-      {/* Fixed height to prevent jumping */}
+    <SafeAreaView className="bg-blue-500">
       <View className="flex-row items-center px-4" style={{ height: 56 }}>
+        
         {searchMode ? (
+          // ----------------------
           // Search Mode Header
+          // ----------------------
           <>
-            {/* Back Button */}
+            {/* Back Button to exit Search Mode */}
             <TouchableOpacity onPress={() => setSearchMode(false)} style={{ marginRight: 10 }}>
               <Ionicons name="arrow-back" size={24} color="white" />
             </TouchableOpacity>
@@ -40,8 +44,17 @@ const CustomHeader = ({ title = 'Home' }) => {
             </TouchableOpacity>
           </>
         ) : (
+          // -----------------------
           // Default Header Mode
+          // -----------------------
           <>
+            {/* Conditionally show the Back Button based on the prop */}
+            {showBackButton && (
+              <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 10 }}>
+                <Ionicons name="arrow-back" size={24} color="white" />
+              </TouchableOpacity>
+            )}
+
             <Text className="text-white text-lg font-semibold flex-1">{title}</Text>
 
             {/* Search Icon */}

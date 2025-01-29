@@ -53,7 +53,10 @@ const LeadsScreen = ({ navigation }) => {
         data={leadsData}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <View className="flex-row items-center p-4 border-b border-gray-200">
+          <TouchableOpacity
+            onPress={() => navigation.navigate('LeadDetailsScreen', { lead: item })}
+            className="flex-row items-center p-4 border-b border-gray-200"
+          >
             <Ionicons
               name="person-circle"
               size={40}
@@ -64,11 +67,11 @@ const LeadsScreen = ({ navigation }) => {
               <Text className="text-black text-base font-semibold">{item.name}</Text>
               <Text className="text-gray-600">{item.email}</Text>
             </View>
-          </View>
+          </TouchableOpacity>
         )}
       />
 
-      {/* ——————————— Single FAB (No animation or sub-menu) ——————————— */}
+      {/* ——————————— Single FAB ——————————— */}
       <View className="absolute bottom-10 right-10">
         <TouchableOpacity
           className="bg-blue-500 w-14 h-14 rounded-full items-center justify-center shadow-lg"
