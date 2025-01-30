@@ -24,8 +24,8 @@ export default function TabNavigator() {
             iconName = focused ? 'compass' : 'compass-outline';
           } else if (route.name === 'Contacts') {
             iconName = focused ? 'people' : 'people-outline';
-          } else if (route.name === 'More') {
-            iconName = focused ? 'menu' : 'menu-outline';
+          } else if (route.name === 'Profile') {
+            iconName = focused ? 'person' : 'person-outline';
           } else {
             iconName = 'help-circle-outline';
           }
@@ -54,9 +54,9 @@ export default function TabNavigator() {
         options={{ header: (props) => <CustomHeader {...props} title="Contacts" /> }}
       />
       <Tab.Screen
-        name="More"
+        name="Profile"
         component={MoreScreen}
-        options={{ header: (props) => <CustomHeader {...props} title="More" /> }}
+        options={{ header: (props) => <CustomHeader {...props} title="Profile" /> }}
       />
     </Tab.Navigator>
   );
