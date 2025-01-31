@@ -7,7 +7,6 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
-  StyleSheet,
   TextInput,
   TouchableOpacity,
   SafeAreaView,
@@ -15,19 +14,16 @@ import {
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useNavigation } from "@react-navigation/native";
 
-// Optional: If you need iOS safe area handling
-// import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-// You can define props for custom headings, placeholders, colors, etc.
 const ReusableLoginScreen = ({
-  onLoginPress,                // callback function to handle login
-  onForgotPasswordPress,       // callback function for forgot password
-  onSignUpPress,               // callback function for sign up
-  isLoading = false,           // loading state from parent
-  backgroundImageSource,       // pass in an image source for background
-  gradientColors = ["#2b054c", "#2b054c", "#bcffd0"], // default gradient
-  containerStyle,              // optional style overrides
+  onLoginPress,                // Callback function to handle login
+  onForgotPasswordPress,       // Callback function for forgot password
+  onSignUpPress,               // Callback function for sign up
+  isLoading = false,           // Loading state from parent
+  backgroundImageSource,       // Image source for background
+ gradientColors = ["#0000FF", "#0000FF", "#87CEFA"],
+  containerStyle,              // Optional style overrides
   titleText = "Welcome Back!",
   subtitleText = "Log in or Sign up",
   loginButtonText = "Login",
@@ -35,55 +31,57 @@ const ReusableLoginScreen = ({
   placeholders = { email: "Enter email", password: "Password" },
 }) => {
   // Local state
+  const navigation = useNavigation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // const { top, bottom } = useSafeAreaInsets(); // if needed
-
+  // Toggle password visibility
   const togglePasswordVisibility = () => {
     setIsPasswordVisible(!isPasswordVisible);
   };
 
+  // Handle login action
   const handleLogin = () => {
-    // You can do local validation here, then call the passed callback
+    // Local validation
     if (!email || !password) {
       setErrorMessage("Please enter an email and password.");
       return;
     }
     setErrorMessage("");
+    navigation.navigate('Main')
     onLoginPress && onLoginPress(email, password, setErrorMessage);
   };
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={[styles.flexContainer, containerStyle]}
+      className={`flex-1 bg-[#F4F5F9] ${containerStyle}`}
     >
-      <SafeAreaView style={styles.flexContainer}>
+      <SafeAreaView className="flex-1">
         <StatusBar translucent backgroundColor="transparent" />
 
-        {/* Background image if provided */}
-        {backgroundImageSource && (
-          <Image
-            source={require('../../assets/splash.jpg')}
-            style={styles.backgroundImage}
-          />
-        )}
+        {/* Background Image */}
 
-        {/* Foreground content */}
-        <View style={styles.bottomContainer}>
+          <Image
+            source={require("../../assets/splash.jpg")}
+            className="absolute w-full h-full object-cover"
+          />
+   
+
+        {/* Foreground Content */}
+        <View className="absolute bottom-0 w-full bg-[#F4F5F9] rounded-t-3xl px-4 py-6">
           {/* Titles */}
-          <View style={styles.titleContainer}>
-            <Text style={styles.title}>{titleText}</Text>
-            <Text style={styles.subtitle}>{subtitleText}</Text>
+          <View className="mb-4">
+            <Text className="text-xl font-bold text-black">{titleText}</Text>
+            <Text className="text-base text-[#868889] mt-[-4px]">{subtitleText}</Text>
           </View>
 
           {/* Input Fields */}
-          <View style={styles.inputsWrapper}>
+          <View className="my-2">
             {/* Email Input */}
-            <View style={styles.inputContainer}>
+            <View className="flex-row items-center bg-white p-2.5 rounded-lg mb-3">
               <Ionicons name="mail-outline" size={20} color="gray" />
               <TextInput
                 placeholder={placeholders.email}
@@ -91,19 +89,19 @@ const ReusableLoginScreen = ({
                 onChangeText={setEmail}
                 keyboardType="email-address"
                 autoCapitalize="none"
-                style={styles.textInput}
+                className="flex-1 ml-2 text-black"
               />
             </View>
 
             {/* Password Input */}
-            <View style={styles.inputContainer}>
+            <View className="flex-row items-center bg-white p-2.5 rounded-lg mb-3">
               <Ionicons name="lock-closed-outline" size={20} color="gray" />
               <TextInput
                 placeholder={placeholders.password}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!isPasswordVisible}
-                style={styles.textInput}
+                className="flex-1 ml-2 text-black"
               />
               <TouchableOpacity onPress={togglePasswordVisibility}>
                 <Ionicons
@@ -116,16 +114,13 @@ const ReusableLoginScreen = ({
           </View>
 
           {/* Error Message */}
-          {!!errorMessage && (
-            <Text style={styles.errorMessage}>{errorMessage}</Text>
-          )}
+          {errorMessage ? (
+            <Text className="text-red-500 text-xs mt-1">{errorMessage}</Text>
+          ) : null}
 
           {/* Forgot Password */}
-          <TouchableOpacity
-            onPress={onForgotPasswordPress}
-            style={styles.forgotPassword}
-          >
-            <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+          <TouchableOpacity onPress={onForgotPasswordPress} className="self-end mt-4 mb-4">
+            <Text className="text-[#0070FF] text-sm">Forgot password?</Text>
           </TouchableOpacity>
 
           {/* Login Button */}
@@ -133,28 +128,26 @@ const ReusableLoginScreen = ({
             colors={gradientColors}
             start={{ x: 0, y: 1 }}
             end={{ x: 1.9, y: 0 }}
-            style={styles.loginButtonGradient}
+            className="rounded-xl mb-4 overflow-hidden"
           >
             <Pressable
-              style={styles.loginButton}
               onPress={handleLogin}
               disabled={isLoading}
+              className="p-3 items-center rounded-lg"
             >
               {isLoading ? (
                 <ActivityIndicator size="small" color="#ffffff" />
               ) : (
-                <Text style={styles.loginButtonText}>{loginButtonText}</Text>
+                <Text className="text-white text-base font-semibold">{loginButtonText}</Text>
               )}
             </Pressable>
           </LinearGradient>
 
           {/* Sign Up */}
-          <View style={styles.signUpContainer}>
-            <Text style={styles.signUpPrompt}>
-              Don’t have an account?{" "}
-            </Text>
-            <TouchableOpacity onPress={onSignUpPress}>
-              <Text style={styles.signUpText}>{signUpText}</Text>
+          <View className="flex-row justify-center">
+            <Text className="text-[#868889] text-sm">Don’t have an account? </Text>
+            <TouchableOpacity onPress={()=>{navigation.navigate('SignUp')}}>
+              <Text className="text-[#0070FF] text-sm font-semibold">{signUpText}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -164,96 +157,3 @@ const ReusableLoginScreen = ({
 };
 
 export default ReusableLoginScreen;
-
-// -------------------------- STYLES --------------------------------
-const styles = StyleSheet.create({
-  flexContainer: {
-    flex: 1,
-    backgroundColor: "#F4F5F9",
-  },
-  backgroundImage: {
-    position: "absolute",
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
-  },
-  bottomContainer: {
-    position: "absolute",
-    bottom: 0,
-    width: "100%",
-    backgroundColor: "#F4F5F9",
-    borderTopRightRadius: 20,
-    borderTopLeftRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 24,
-  },
-  titleContainer: {
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#000",
-  },
-  subtitle: {
-    fontSize: 14,
-    color: "#868889",
-    marginTop: -4,
-  },
-  inputsWrapper: {
-    marginVertical: 8,
-  },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 12,
-  },
-  textInput: {
-    flex: 1,
-    marginLeft: 8,
-    color: "#000",
-  },
-  errorMessage: {
-    color: "red",
-    fontSize: 13,
-    marginTop: 5,
-  },
-  forgotPassword: {
-    alignSelf: "flex-end",
-    marginBottom: 16,
-  },
-  forgotPasswordText: {
-    color: "#0070FF",
-    fontSize: 14,
-  },
-  loginButtonGradient: {
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  loginButton: {
-    padding: 12,
-    alignItems: "center",
-    borderRadius: 8,
-  },
-  loginButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  signUpContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-  },
-  signUpPrompt: {
-    color: "#868889",
-    fontSize: 14,
-  },
-  signUpText: {
-    color: "#0070FF",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-});

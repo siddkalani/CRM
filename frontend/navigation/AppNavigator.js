@@ -8,6 +8,7 @@ import CustomHeader from '../components/CustomHeader';
 import EditLeadDetails from '../screens/leads/EditLeadDetails';
 import LeadDetailsScreen from '../screens/leads/LeadDetailsScreen';
 import ReusableLoginScreen from '../screens/auth/LogIn';
+import SignUp from '../screens/auth/SignUp';
 
 // Create Stack Navigator
 const Stack = createNativeStackNavigator();
@@ -16,11 +17,16 @@ export default function AppNavigator() {
   return (
     <NavigationContainer>
       <Stack.Navigator>
-      {/* <Stack.Screen
+      <Stack.Screen
           name="LogIn"
           component={ReusableLoginScreen}
           options={{ headerShown: false }}
-        /> */}
+        />
+        <Stack.Screen
+          name="SignUp"
+          component={SignUp}
+          options={{ headerShown: false }}
+        />
         {/* Main Tab Navigation */}
         <Stack.Screen
           name="Main"
