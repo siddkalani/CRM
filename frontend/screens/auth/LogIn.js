@@ -17,12 +17,12 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation } from "@react-navigation/native";
 
 const ReusableLoginScreen = ({
-  onLoginPress,                // Callback function to handle login
-  onForgotPasswordPress,       // Callback function for forgot password
-  onSignUpPress,               // Callback function for sign up
-  isLoading = false,           // Loading state from parent
+  onLoginPress,                // Callback if parent wants to do additional logic
+  onForgotPasswordPress,       // Callback for forgot password
+  onSignUpPress,               // Callback for sign up
+  isLoading: parentIsLoading = false,  // If parent manages loading
   backgroundImageSource,       // Image source for background
- gradientColors = ["#0000FF", "#0000FF", "#87CEFA"],
+  gradientColors = ["#0000FF", "#0000FF", "#87CEFA"],
   containerStyle,              // Optional style overrides
   titleText = "Welcome Back!",
   subtitleText = "Log in or Sign up",
@@ -30,12 +30,15 @@ const ReusableLoginScreen = ({
   signUpText = "Sign Up",
   placeholders = { email: "Enter email", password: "Password" },
 }) => {
-  // Local state
+  // Local states
   const navigation = useNavigation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  
+  // If you want to manage loading locally, set up a local isLoading state:
+  const [localIsLoading, setLocalIsLoading] = useState(false);
 
   // Toggle password visibility
   const togglePasswordVisibility = () => {
@@ -43,15 +46,55 @@ const ReusableLoginScreen = ({
   };
 
   // Handle login action
-  const handleLogin = () => {
-    // Local validation
+  const handleLogin = async () => {
+    // Basic validation
     if (!email || !password) {
       setErrorMessage("Please enter an email and password.");
       return;
     }
     setErrorMessage("");
-    navigation.navigate('Main')
-    onLoginPress && onLoginPress(email, password, setErrorMessage);
+
+    // Start loading
+    setLocalIsLoading(true);
+
+    try {
+      // Make the POST request to your login endpoint
+      // If testing on a real device, replace 'localhost' with your machine's IP
+      const response = await fetch("http://localhost:3002/api/users/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email,     // backend expects "email"
+          password: password, // backend expects "password"
+        }),
+      });
+
+      if (!response.ok) {
+        // If the server sends back a JSON error (e.g. { message: 'Invalid credentials' })
+        const errorData = await response.json();
+        setErrorMessage(errorData.message || "Login failed. Please try again.");
+        return;
+      }
+
+      // On success, parse the response
+      const data = await response.json();
+
+      // If your API returns a token, store it if needed (e.g. AsyncStorage):
+      // await AsyncStorage.setItem("token", data.token);
+
+      // Navigate to the main screen or wherever you want
+      navigation.navigate("Main");
+      
+      // If parent has onLoginPress, call it with the details
+      onLoginPress && onLoginPress(email, password, setErrorMessage);
+
+    } catch (error) {
+      console.error("Login error:", error);
+      setErrorMessage("An error occurred. Please try again.");
+    } finally {
+      // End loading
+      setLocalIsLoading(false);
+    }
   };
 
   return (
@@ -63,19 +106,23 @@ const ReusableLoginScreen = ({
         <StatusBar translucent backgroundColor="transparent" />
 
         {/* Background Image */}
-
-          <Image
-            source={require("../../assets/splash.jpg")}
-            className="absolute w-full h-full object-cover"
-          />
-   
+        <Image
+          source={
+            backgroundImageSource
+              ? backgroundImageSource
+              : require("../../assets/splash.jpg")
+          }
+          className="absolute w-full h-full object-cover"
+        />
 
         {/* Foreground Content */}
         <View className="absolute bottom-0 w-full bg-[#F4F5F9] rounded-t-3xl px-4 py-6">
           {/* Titles */}
           <View className="mb-4">
             <Text className="text-xl font-bold text-black">{titleText}</Text>
-            <Text className="text-base text-[#868889] mt-[-4px]">{subtitleText}</Text>
+            <Text className="text-base text-[#868889] mt-[-4px]">
+              {subtitleText}
+            </Text>
           </View>
 
           {/* Input Fields */}
@@ -119,7 +166,10 @@ const ReusableLoginScreen = ({
           ) : null}
 
           {/* Forgot Password */}
-          <TouchableOpacity onPress={onForgotPasswordPress} className="self-end mt-4 mb-4">
+          <TouchableOpacity
+            onPress={onForgotPasswordPress}
+            className="self-end mt-4 mb-4"
+          >
             <Text className="text-[#0070FF] text-sm">Forgot password?</Text>
           </TouchableOpacity>
 
@@ -132,13 +182,15 @@ const ReusableLoginScreen = ({
           >
             <Pressable
               onPress={handleLogin}
-              disabled={isLoading}
+              disabled={localIsLoading || parentIsLoading}
               className="p-3 items-center rounded-lg"
             >
-              {isLoading ? (
+              {(localIsLoading || parentIsLoading) ? (
                 <ActivityIndicator size="small" color="#ffffff" />
               ) : (
-                <Text className="text-white text-base font-semibold">{loginButtonText}</Text>
+                <Text className="text-white text-base font-semibold">
+                  {loginButtonText}
+                </Text>
               )}
             </Pressable>
           </LinearGradient>
@@ -146,8 +198,15 @@ const ReusableLoginScreen = ({
           {/* Sign Up */}
           <View className="flex-row justify-center">
             <Text className="text-[#868889] text-sm">Don’t have an account? </Text>
-            <TouchableOpacity onPress={()=>{navigation.navigate('SignUp')}}>
-              <Text className="text-[#0070FF] text-sm font-semibold">{signUpText}</Text>
+            <TouchableOpacity
+              onPress={() => {
+                // If parent doesn’t handle signUp navigation, do it here:
+                onSignUpPress ? onSignUpPress() : navigation.navigate("SignUp");
+              }}
+            >
+              <Text className="text-[#0070FF] text-sm font-semibold">
+                {signUpText}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
