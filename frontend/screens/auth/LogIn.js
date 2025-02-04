@@ -15,6 +15,7 @@ import {
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const ReusableLoginScreen = ({
   onLoginPress,                // Callback if parent wants to do additional logic
@@ -47,6 +48,7 @@ const ReusableLoginScreen = ({
 
   // Handle login action
   const handleLogin = async () => {
+    console.log("siddharth");
     // Basic validation
     if (!email || !password) {
       setErrorMessage("Please enter an email and password.");
@@ -60,7 +62,7 @@ const ReusableLoginScreen = ({
     try {
       // Make the POST request to your login endpoint
       // If testing on a real device, replace 'localhost' with your machine's IP
-      const response = await fetch("http://localhost:3002/api/users/login", {
+      const response = await fetch("http://10.0.56.109:3002/api/users/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -68,7 +70,7 @@ const ReusableLoginScreen = ({
           password: password, // backend expects "password"
         }),
       });
-
+      
       if (!response.ok) {
         // If the server sends back a JSON error (e.g. { message: 'Invalid credentials' })
         const errorData = await response.json();
@@ -80,13 +82,15 @@ const ReusableLoginScreen = ({
       const data = await response.json();
 
       // If your API returns a token, store it if needed (e.g. AsyncStorage):
-      // await AsyncStorage.setItem("token", data.token);
-
+      await AsyncStorage.setItem("token", data.accessToken);
       // Navigate to the main screen or wherever you want
-      navigation.navigate("Main");
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Main" }],
+      });
       
       // If parent has onLoginPress, call it with the details
-      onLoginPress && onLoginPress(email, password, setErrorMessage);
+      // onLoginPress && onLoginPress(email, password, setErrorMessage);
 
     } catch (error) {
       console.error("Login error:", error);

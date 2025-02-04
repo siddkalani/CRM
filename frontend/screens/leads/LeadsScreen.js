@@ -26,24 +26,18 @@ const LeadsScreen = ({ navigation }) => {
         {/* Left side: “All Leads” + Down Arrow */}
         <View className="flex-row items-center">
           <Text className="text-blue-500 text-base font-bold">All Leads</Text>
-          <Ionicons
+          {/* <Ionicons
             name="chevron-down"
             size={16}
             color="#4285F4"
             style={{ marginLeft: 4 }}
-          />
+          /> */}
         </View>
 
         {/* Right side: Search, Settings, 3-dots */}
         <View className="flex-row items-center">
-          <TouchableOpacity className="mr-4">
-            <Ionicons name="search" size={20} color="gray" />
-          </TouchableOpacity>
-          <TouchableOpacity className="mr-4">
-            <Ionicons name="settings" size={20} color="gray" />
-          </TouchableOpacity>
           <TouchableOpacity>
-            <Ionicons name="ellipsis-vertical" size={20} color="gray" />
+            <Ionicons name="filter-circle-outline" size={24} color="gray" />
           </TouchableOpacity>
         </View>
       </View>

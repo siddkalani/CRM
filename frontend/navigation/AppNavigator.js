@@ -9,6 +9,7 @@ import EditLeadDetails from '../screens/leads/EditLeadDetails';
 import LeadDetailsScreen from '../screens/leads/LeadDetailsScreen';
 import ReusableLoginScreen from '../screens/auth/LogIn';
 import SignUp from '../screens/auth/SignUp';
+import AuthLoadingScreen from '../screens/inital/AuthLoadingScreen';
 
 // Create Stack Navigator
 const Stack = createNativeStackNavigator();
@@ -16,7 +17,8 @@ const Stack = createNativeStackNavigator();
 export default function AppNavigator() {
   return (
     <NavigationContainer>
-      <Stack.Navigator>
+      <Stack.Navigator initialRouteName="AuthLoading">
+      <Stack.Screen name="AuthLoading" component={AuthLoadingScreen} />
       <Stack.Screen
           name="LogIn"
           component={ReusableLoginScreen}
@@ -58,7 +60,16 @@ export default function AppNavigator() {
           name="LeadDetailsScreen"
           component={LeadDetailsScreen}
           // The title is also overridden in the screen with useLayoutEffect
-          options={{ title: 'Leads' }}
+          options={{
+            header: (props) => (
+              <CustomHeader
+                {...props}
+                title="Lead details"
+                showBackButton={true} // <-- only set this prop for AddLeadScreen
+              />
+            ),
+          }}
+          // options={{ title: 'Leads' }}
         />
         
         <Stack.Screen

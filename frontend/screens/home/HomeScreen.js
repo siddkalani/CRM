@@ -10,13 +10,6 @@ const HomeScreen = () => {
         <Text className="text-gray-700 text-base mb-2">
           Welcome siddharth kalani
         </Text>
-        <TouchableOpacity
-          activeOpacity={0.7}
-          className="flex-row items-center justify-between bg-white rounded-md px-3 py-2 shadow"
-        >
-          <Text className="text-gray-800">siddharth kalani's Home</Text>
-          <Ionicons name="chevron-down" size={18} color="#666" />
-        </TouchableOpacity>
       </View>
 
       {/* Stats Cards */}

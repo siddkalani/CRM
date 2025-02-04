@@ -1,3 +1,4 @@
+// LeadDetailsScreen.js
 import React, { useState, useLayoutEffect } from 'react';
 import {
   View,
@@ -8,22 +9,28 @@ import {
   TextInput
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useDispatch } from 'react-redux';
+import { updateLeadNotes } from '../../store/LeadSlice'; // adjust the path as needed
 
 const LeadDetailsScreen = ({ route, navigation }) => {
-  // Retrieve lead data
+  // Retrieve lead data (make sure the lead includes an _id field if coming from your backend)
   const lead = route.params?.lead || {
+    _id: '123456', // sample id; in production this should come from your backend
     firstName: 'Carissa',
     lastName: 'Kidman (Sample)',
     email: 'carissa-kidman@noemail.invalid',
     phone: '555-555-5555',
     owner: 'siddharth kalani',
+    notes: ''
   };
 
   // Tab state (RELATED, EMAILS, DETAILS)
   const [activeTab, setActiveTab] = useState('RELATED');
 
   // Notes state (typed only, no voice)
-  const [notes, setNotes] = useState('');
+  const [notes, setNotes] = useState(lead.notes || '');
+
+  const dispatch = useDispatch();
 
   // Pencil icon in header
   useLayoutEffect(() => {
@@ -56,9 +63,7 @@ const LeadDetailsScreen = ({ route, navigation }) => {
               onPress={() => setActiveTab(tab)}
               className={`py-3 px-4 ${isActive ? 'border-b-2 border-white' : ''}`}
             >
-              <Text
-                className={`text-white ${isActive ? 'font-bold' : 'font-semibold'}`}
-              >
+              <Text className={`text-white ${isActive ? 'font-bold' : 'font-semibold'}`}>
                 {tab}
               </Text>
             </TouchableOpacity>
@@ -66,6 +71,12 @@ const LeadDetailsScreen = ({ route, navigation }) => {
         })}
       </View>
     );
+  };
+
+  // Handler for saving notes
+  const handleSaveNotes = () => {
+    // Dispatch the async thunk to update notes on the backend.
+    dispatch(updateLeadNotes({ leadId: lead._id, notes }));
   };
 
   return (
@@ -107,6 +118,14 @@ const LeadDetailsScreen = ({ route, navigation }) => {
             value={notes}
             onChangeText={setNotes}
           />
+
+          {/* Save Notes Button */}
+          <TouchableOpacity
+            onPress={handleSaveNotes}
+            className="bg-blue-500 rounded px-4 py-2 mt-2 self-start"
+          >
+            <Text className="text-white">Save Notes</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
 
