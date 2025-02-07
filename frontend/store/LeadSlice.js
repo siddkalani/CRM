@@ -1,12 +1,13 @@
 // features/lead/leadSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { BASE_URL } from '../constants/constant';
 
 // Async thunk to update lead notes on the backend
 export const updateLeadNotes = createAsyncThunk(
   'lead/updateLeadNotes',
   async ({ leadId, notes }, thunkAPI) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/leads/${leadId}/notes`, {
+      const response = await fetch(`${BASE_URL}/api/leads/${leadId}/notes`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

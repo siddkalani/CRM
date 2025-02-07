@@ -4,7 +4,7 @@ const { getContact, addContact, updateContact, deleteContact, getContactbyId } =
 const validateToken = require('../middleware/tokenValidator')
 const app = express()
 
-router.use(validateToken);
+// router.use(validateToken);
 
 router.route('/').get(getContact).post(addContact)
 router.route('/:id').put(updateContact).delete(deleteContact).get(getContactbyId)

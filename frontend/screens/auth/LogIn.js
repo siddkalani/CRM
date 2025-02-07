@@ -16,6 +16,7 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { BASE_URL } from "../../constants/constant";
 
 const ReusableLoginScreen = ({
   onLoginPress,                // Callback if parent wants to do additional logic
@@ -62,7 +63,7 @@ const ReusableLoginScreen = ({
     try {
       // Make the POST request to your login endpoint
       // If testing on a real device, replace 'localhost' with your machine's IP
-      const response = await fetch("http://10.0.56.109:3002/api/users/login", {
+      const response = await fetch(`${BASE_URL}/api/users/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
