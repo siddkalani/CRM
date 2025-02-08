@@ -11,8 +11,10 @@ const AuthLoadingScreen = () => {
       try {
         // Retrieve token from storage
         const userToken = await AsyncStorage.getItem("token");
+        const userId = await AsyncStorage.getItem("userId");
 
         console.log("User Token:", userToken);
+        console.log("User id:", userId);
 
         // If we have a token, navigate to Main
         if (userToken) {

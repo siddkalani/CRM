@@ -10,6 +10,9 @@ const HomeScreen = () => {
     try {
       // Clear userToken from AsyncStorage
       await AsyncStorage.removeItem("token");
+      await AsyncStorage.removeItem("userId");
+
+      console.log("Logged out successfully!");
       
       // Navigate to Login page
       navigation.reset({

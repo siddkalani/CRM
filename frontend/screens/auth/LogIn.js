@@ -83,6 +83,7 @@ const ReusableLoginScreen = ({
       const data = await response.json();
 
       // If your API returns a token, store it if needed (e.g. AsyncStorage):
+      await AsyncStorage.setItem("userId", data.userId);
       await AsyncStorage.setItem("token", data.accessToken);
       // Navigate to the main screen or wherever you want
       navigation.reset({
