@@ -5,7 +5,11 @@ const LeadSchema = new mongoose.Schema({
   lastName: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   phone: { type: String },
-  owner: { type: String },
+  ownerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Users",
+    required: true,
+  },
   notes: { type: String, default: '' },
 }, { timestamps: true });
 

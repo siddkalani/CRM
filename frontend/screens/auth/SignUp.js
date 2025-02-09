@@ -15,6 +15,7 @@ import {
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation } from "@react-navigation/native";
+import { BASE_URL } from "../../constants/constant";
 
 const ReusableSignUpScreen = ({
   onSignUpPress,               // Callback: optional if parent handles extra logic
@@ -76,7 +77,7 @@ const ReusableSignUpScreen = ({
       // Send POST request to your backend endpoint
       // NOTE: Replace "localhost" with your machine's IP
       //       if you're testing on a real device (instead of an emulator).
-      const response = await fetch("http://localhost:3002/api/users/register", {
+      const response = await fetch(`${BASE_URL}/api/users/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

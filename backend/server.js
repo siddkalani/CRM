@@ -6,6 +6,7 @@ const morgan = require('morgan')
 const contactRoutes = require('./routes/contactRoutes')
 const userRoutes = require('./routes/userRoutes')
 const otpRoutes = require('./routes/otpRoutes')
+const leadRoutes = require('./routes/leadRoutes')
 const cors = require('cors');
 
 const app = express()
@@ -20,6 +21,7 @@ app.use(morgan('dev'))
 app.use('/api/contacts',contactRoutes)
 app.use('/api/users',userRoutes)
 app.use('/api/otp', otpRoutes);
+app.use('/api/lead', leadRoutes);
 app.use(errorHandler)
 
 app.listen(port, ()=>{

@@ -1,7 +1,16 @@
 // routes/leads.js
 const express = require('express');
 const router = express.Router();
-const Lead = require('../models/Lead');
+const Lead = require('../models/leadModel');
+const validateToken = require('../middleware/tokenValidator');
+const {getLeads, addLead, getLeadById, updateLead} = require('../controller/leadController');
+
+
+// router.use(validateToken);
+
+router.route('/:userId').get(getLeads).post(addLead);
+router.route('/:id').get(getLeadById).put(updateLead);
+
 
 // Update lead notes
 router.put('/:id/notes', async (req, res) => {

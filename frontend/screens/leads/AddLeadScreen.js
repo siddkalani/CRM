@@ -1,6 +1,8 @@
 import React, { useLayoutEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { BASE_URL } from '../../constants/constant';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const AddLeadScreen = ({ navigation }) => {
   // Example local states for each field
@@ -26,18 +28,49 @@ const AddLeadScreen = ({ navigation }) => {
     });
   }, [navigation, company, firstName, lastName, email, phone]);
 
-  const handleSave = () => {
+  const handleSave = async() => {
+    const userId = await AsyncStorage.getItem('userId');
     // Here you would typically create a new lead object 
     // and call your API or Redux action, etc.
     const newLead = {
-      id: Date.now(), // mock ID
-      company,
+      // id: Date.now(), // mock ID
+      // company,
       firstName,
       lastName,
       email,
       phone,
-      owner: 'siddharth kalani',
+      ownerId: userId,
+      notes :company
+      // owner: 'siddharth kalani',
     };
+
+
+
+    try {
+      // Send data to backend
+      const response = await fetch(`${BASE_URL}/api/lead/${userId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newLead),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        Alert.alert("Error", errorData.message || "Failed to add lead.");
+        return;
+      }
+
+      const responseData = await response.json();
+      Alert.alert("Success", "Lead added successfully.");
+
+      // Navigate back or to another screen
+      navigation.goBack();
+    } catch (error) {
+      Alert.alert("Error", "An error occurred while adding the lead.");
+      console.error(error);
+    }
 
     // Navigate back or to a “LeadDetailsScreen” after saving
     navigation.goBack();
@@ -105,6 +138,12 @@ const AddLeadScreen = ({ navigation }) => {
         </View>
       </ScrollView>
 
+      <TouchableOpacity
+        className="p-4 bg-blue-500 items-center"
+        onPress={handleSave}
+      >
+        <Text className="text-white font-bold">Add Lead</Text>
+      </TouchableOpacity>
       {/* Show All Fields Button (optional) */}
       <TouchableOpacity className="p-4 border-t border-gray-200 items-center">
         <Text className="text-blue-500">Show all fields</Text>
