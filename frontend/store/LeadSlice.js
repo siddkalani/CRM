@@ -6,7 +6,7 @@ export const updateLeadNotes = createAsyncThunk(
   'lead/updateLeadNotes',
   async ({ leadId, notes }, thunkAPI) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/leads/${leadId}/notes`, {
+      const response = await fetch(`http://localhost:3000/api/leads/${leadId}/notes`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
