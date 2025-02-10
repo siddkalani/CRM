@@ -1,18 +1,56 @@
 import React, { useLayoutEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { BASE_URL } from '../../constants/constant';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { BASE_URL } from '../../constants/constant';
 
 const AddLeadScreen = ({ navigation }) => {
-  // Example local states for each field
+  // State for each field
   const [company, setCompany] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
 
-  // Add a checkmark icon in the header
+  // Function to handle saving the lead
+  const handleSave = async () => {
+    const userId = await AsyncStorage.getItem('userId');
+    const newLead = {
+      firstName,
+      lastName,
+      email,
+      phone,
+      ownerId: userId,
+      notes: company,
+    };
+
+    try {
+      const response = await fetch(`${BASE_URL}/api/lead/${userId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newLead),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        Alert.alert('Error', errorData.message || 'Failed to add lead.');
+        return;
+      }
+
+      // Wait for response data if needed (not used here)
+      await response.json();
+
+      // Show success alert and navigate back on confirmation
+      Alert.alert('Success', 'Lead added successfully.', [
+        { text: 'OK', onPress: () => navigation.goBack() },
+      ]);
+    } catch (error) {
+      Alert.alert('Error', 'An error occurred while adding the lead.');
+      console.error(error);
+    }
+  };
+
+  // Add the checkmark icon in the header
   useLayoutEffect(() => {
     navigation.setOptions({
       title: 'Add Lead',
@@ -28,109 +66,94 @@ const AddLeadScreen = ({ navigation }) => {
     });
   }, [navigation, company, firstName, lastName, email, phone]);
 
-  const handleSave = async() => {
-    const userId = await AsyncStorage.getItem('userId');
-    // Here you would typically create a new lead object 
-    // and call your API or Redux action, etc.
-    const newLead = {
-      // id: Date.now(), // mock ID
-      // company,
-      firstName,
-      lastName,
-      email,
-      phone,
-      ownerId: userId,
-      notes :company
-      // owner: 'siddharth kalani',
-    };
-
-
-
-    try {
-      // Send data to backend
-      const response = await fetch(`${BASE_URL}/api/lead/${userId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newLead),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        Alert.alert("Error", errorData.message || "Failed to add lead.");
-        return;
-      }
-
-      const responseData = await response.json();
-      Alert.alert("Success", "Lead added successfully.");
-
-      // Navigate back or to another screen
-      navigation.goBack();
-    } catch (error) {
-      Alert.alert("Error", "An error occurred while adding the lead.");
-      console.error(error);
-    }
-
-    // Navigate back or to a “LeadDetailsScreen” after saving
-    navigation.goBack();
-    // or: navigation.navigate('LeadDetailsScreen', { lead: newLead });
-  };
-
   return (
-    <View className="flex-1 bg-white">
-      <ScrollView className="px-4 py-2">
-        <View className="border-b border-gray-200 py-2">
-          <Text className="text-gray-600">Lead Owner</Text>
-          <Text className="text-black font-semibold">siddharth kalani</Text>
+    <View style={{ flex: 1, backgroundColor: '#fff' }}>
+      <ScrollView style={{ padding: 16 }}>
+        {/* Lead Owner Section */}
+        <View style={{ marginBottom: 16 }}>
+          <Text style={{ color: '#666' }}>Lead Owner</Text>
+          <Text style={{ fontWeight: '600', color: '#000' }}>siddharth kalani</Text>
         </View>
 
-        <View className="border-b border-gray-200 py-2">
-          <Text className="text-red-500">*</Text>
-          <Text className="text-gray-600">Company</Text>
+        {/* Company */}
+        <View style={{ marginBottom: 16 }}>
+          <Text style={{ color: 'red' }}>* Company</Text>
           <TextInput
-            className="border border-gray-300 p-2 rounded-md"
+            style={{
+              borderWidth: 1,
+              borderColor: '#ccc',
+              padding: 8,
+              borderRadius: 4,
+              marginTop: 4,
+            }}
             placeholder="Enter Company"
             value={company}
             onChangeText={setCompany}
           />
         </View>
 
-        <View className="border-b border-gray-200 py-2">
-          <Text className="text-gray-600">First Name</Text>
+        {/* First Name */}
+        <View style={{ marginBottom: 16 }}>
+          <Text style={{ color: '#666' }}>First Name</Text>
           <TextInput
-            className="border border-gray-300 p-2 rounded-md"
+            style={{
+              borderWidth: 1,
+              borderColor: '#ccc',
+              padding: 8,
+              borderRadius: 4,
+              marginTop: 4,
+            }}
             placeholder="Enter First Name"
             value={firstName}
             onChangeText={setFirstName}
           />
         </View>
 
-        <View className="border-b border-gray-200 py-2">
-          <Text className="text-red-500">*</Text>
-          <Text className="text-gray-600">Last Name</Text>
+        {/* Last Name */}
+        <View style={{ marginBottom: 16 }}>
+          <Text style={{ color: 'red' }}>* Last Name</Text>
           <TextInput
-            className="border border-gray-300 p-2 rounded-md"
+            style={{
+              borderWidth: 1,
+              borderColor: '#ccc',
+              padding: 8,
+              borderRadius: 4,
+              marginTop: 4,
+            }}
             placeholder="Enter Last Name"
             value={lastName}
             onChangeText={setLastName}
           />
         </View>
 
-        <View className="border-b border-gray-200 py-2">
-          <Text className="text-gray-600">Email</Text>
+        {/* Email */}
+        <View style={{ marginBottom: 16 }}>
+          <Text style={{ color: '#666' }}>Email</Text>
           <TextInput
-            className="border border-gray-300 p-2 rounded-md"
+            style={{
+              borderWidth: 1,
+              borderColor: '#ccc',
+              padding: 8,
+              borderRadius: 4,
+              marginTop: 4,
+            }}
             placeholder="Enter Email"
             value={email}
             onChangeText={setEmail}
           />
         </View>
 
-        <View className="border-b border-gray-200 py-2">
-          <Text className="text-gray-600">Phone</Text>
+        {/* Phone */}
+        <View style={{ marginBottom: 16 }}>
+          <Text style={{ color: '#666' }}>Phone</Text>
           <TextInput
-            className="border border-gray-300 p-2 rounded-md"
+            style={{
+              borderWidth: 1,
+              borderColor: '#ccc',
+              padding: 8,
+              borderRadius: 4,
+              marginTop: 4,
+            }}
             placeholder="Enter Phone Number"
             value={phone}
             onChangeText={setPhone}
@@ -138,15 +161,16 @@ const AddLeadScreen = ({ navigation }) => {
         </View>
       </ScrollView>
 
+      {/* Add Lead Button */}
       <TouchableOpacity
-        className="p-4 bg-blue-500 items-center"
+        style={{
+          padding: 16,
+          backgroundColor: '#007bff',
+          alignItems: 'center',
+        }}
         onPress={handleSave}
       >
-        <Text className="text-white font-bold">Add Lead</Text>
-      </TouchableOpacity>
-      {/* Show All Fields Button (optional) */}
-      <TouchableOpacity className="p-4 border-t border-gray-200 items-center">
-        <Text className="text-blue-500">Show all fields</Text>
+        <Text style={{ color: '#fff', fontWeight: 'bold' }}>Add Lead</Text>
       </TouchableOpacity>
     </View>
   );

@@ -31,7 +31,6 @@ const addLead = asyncHandler(async (req, res) => {
       const newLead = await Lead.create({
         firstName,
         lastName,
-        email,
         phone,
         notes,
         ownerId: userId,

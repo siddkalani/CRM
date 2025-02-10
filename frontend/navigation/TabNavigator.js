@@ -38,11 +38,11 @@ export default function TabNavigator() {
         headerTitleStyle: { color: '#fff' },
       })}
     >
-      <Tab.Screen
+      {/* <Tab.Screen
         name="Home"
         component={HomeScreen}
         options={{ header: (props) => <CustomHeader {...props} title="Home" /> }}
-      />
+      /> */}
       <Tab.Screen
         name="Leads"
         component={LeadsScreen}
@@ -53,11 +53,11 @@ export default function TabNavigator() {
         component={ContactScreen}
         options={{ header: (props) => <CustomHeader {...props} title="Contacts" /> }}
       />
-      <Tab.Screen
+      {/* <Tab.Screen
         name="Profile"
         component={MoreScreen}
         options={{ header: (props) => <CustomHeader {...props} title="Profile" /> }}
-      />
+      /> */}
     </Tab.Navigator>
   );
 }
