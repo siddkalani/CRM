@@ -21,7 +21,7 @@ const AddLeadScreen = ({ navigation }) => {
       email,
       phone,
       ownerId: userId,
-      notes: company,
+      company,
     };
 
     try {

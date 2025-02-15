@@ -7,10 +7,11 @@ import AddLeadScreen from '../screens/leads/AddLeadScreen';
 import CustomHeader from '../components/CustomHeader';
 import EditLeadDetails from '../screens/leads/EditLeadDetails';
 import LeadDetailsScreen from '../screens/leads/LeadDetailsScreen';
+import ContactDetailsScreen from '../screens/contacts/ContactDetailScreen';
 import ReusableLoginScreen from '../screens/auth/LogIn';
 import SignUp from '../screens/auth/SignUp';
 import AuthLoadingScreen from '../screens/inital/AuthLoadingScreen';
-
+import AddContactScreen from '../screens/contacts/AddContactScreen';
 // Create Stack Navigator
 const Stack = createNativeStackNavigator();
 
@@ -56,9 +57,37 @@ export default function AppNavigator() {
             ),
           }}
         />
+        <Stack.Screen
+          name="AddContactScreen"
+          component={AddContactScreen}
+          options={{
+            header: (props) => (
+              <CustomHeader
+                {...props}
+                title="Add Screen"
+                showBackButton={true} // <-- only set this prop for AddLeadScreen
+              />
+            ),
+          }}
+        />
          <Stack.Screen
           name="LeadDetailsScreen"
           component={LeadDetailsScreen}
+          // The title is also overridden in the screen with useLayoutEffect
+          options={{
+            header: (props) => (
+              <CustomHeader
+                {...props}
+                title="Lead details"
+                showBackButton={true} // <-- only set this prop for AddLeadScreen
+              />
+            ),
+          }}
+          // options={{ title: 'Leads' }}
+        />
+         <Stack.Screen
+          name="ContactDetailsScreen"
+          component={ContactDetailsScreen}
           // The title is also overridden in the screen with useLayoutEffect
           options={{
             header: (props) => (
