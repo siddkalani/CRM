@@ -20,7 +20,7 @@ const getLeads = asyncHandler(async (req, res) => {
  */
 const addLead = asyncHandler(async (req, res) => {
     const { userId } = req.params;
-    const { firstName, lastName, email, phone, notes } = req.body;
+    const { firstName, lastName, email, phone, company, notes } = req.body;
   
     if (!firstName || !lastName || !email) {
       res.status(400);
@@ -33,6 +33,7 @@ const addLead = asyncHandler(async (req, res) => {
         lastName,
         phone,
         notes,
+        company,
         ownerId: userId,
       });
   

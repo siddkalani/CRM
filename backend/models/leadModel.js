@@ -10,6 +10,7 @@ const LeadSchema = new mongoose.Schema({
     ref: "Users",
     required: true,
   },
+  company: { type: String }, 
   notes: { type: String, default: '' },
 }, { timestamps: true });
 
