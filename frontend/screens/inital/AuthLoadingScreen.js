@@ -17,7 +17,7 @@ const AuthLoadingScreen = () => {
         console.log("User id:", userId);
 
         // If we have a token, navigate to Main
-        if (userToken) {
+        if (userToken && userId) {
           navigation.replace("Main");
         } else {
           // Otherwise, navigate to Intro / Login / Auth Stack
