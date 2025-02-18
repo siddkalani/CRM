@@ -1,4 +1,4 @@
-// LeadDetailsScreen.js
+
 import React, { useState, useLayoutEffect } from 'react';
 import {
   View,
