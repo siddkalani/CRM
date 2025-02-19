@@ -20,9 +20,9 @@ const getLeads = asyncHandler(async (req, res) => {
  */
 const addLead = asyncHandler(async (req, res) => {
     const { userId } = req.params;
-    const { firstName, lastName, email, phone, notes } = req.body;
+    const { firstName, lastName, email, phone, company, notes } = req.body;
   
-    if (!firstName || !lastName || !email) {
+    if (!firstName || !lastName || !phone) {
       res.status(400);
       throw new Error("First Name, Last Name, and Email are required.");
     }
@@ -31,8 +31,10 @@ const addLead = asyncHandler(async (req, res) => {
       const newLead = await Lead.create({
         firstName,
         lastName,
+        email,
         phone,
         notes,
+        company,
         ownerId: userId,
       });
   

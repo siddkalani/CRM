@@ -10,7 +10,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch } from 'react-redux';
-import { updateLeadNotes } from '../../store/LeadSlice'; // adjust the path as needed
+import { updateLeadNotes } from '../../store/LeadSlice'; 
+import { BASE_URL } from '../../constants/constant';
 
 const LeadDetailsScreen = ({ route, navigation }) => {
   // Retrieve lead data (make sure the lead includes an _id field if coming from your backend)
@@ -74,9 +75,34 @@ const LeadDetailsScreen = ({ route, navigation }) => {
   };
 
   // Handler for saving notes
-  const handleSaveNotes = () => {
-    // Dispatch the async thunk to update notes on the backend.
-    dispatch(updateLeadNotes({ leadId: lead._id, notes }));
+  const handleSaveNotes = async() => {
+    try {
+      // Backend URL (replace with your API endpoint)
+      const apiUrl = `${BASE_URL}/api/lead/${lead._id}/notes`;
+
+      // Make API call to update notes
+      const response = await fetch(apiUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ notes }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update notes");
+      }
+
+      const data = await response.json();
+
+      // Optionally, dispatch an action or update the local state with the response
+      dispatch({ type: "UPDATE_LEAD_NOTES_SUCCESS", payload: data });
+
+      alert("Notes updated successfully!");
+    } catch (error) {
+      console.error("Error updating notes:", error);
+      alert("Failed to update notes. Please try again.");
+    }
   };
 
   return (
