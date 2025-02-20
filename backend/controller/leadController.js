@@ -48,20 +48,25 @@ const addLead = asyncHandler(async (req, res) => {
  * Get a lead by ID for the logged-in user
  */
 const getLeadById = asyncHandler(async (req, res) => {
-    const { userId, id } = req.params;
+  const { id } = req.params;  // Removed userId check for now
 
-    try {
-      const lead = await Lead.findOne({ _id: id, ownerId: userId });
-  
-      if (!lead) {
-        res.status(404).json({ message: "Lead not found" });
-        return;
-      }
-  
-      res.status(200).json({ lead });
-    } catch (error) {
-      res.status(500).json({ message: "Error fetching lead", error });
+  try {
+    const lead = await Lead.findById(id);
+
+    if (!lead) {
+      res.status(404).json({ message: "Lead not found" });
+      return;
     }
+
+    // Force fresh data
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+
+    res.status(200).json(lead);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching lead", error });
+  }
 });
 
 const updateLead = asyncHandler(async (req, res) => {

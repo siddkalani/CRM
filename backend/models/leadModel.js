@@ -1,17 +1,32 @@
+// models/leadModel.js
+
 const mongoose = require('mongoose');
 
-const LeadSchema = new mongoose.Schema({
-  firstName: { type: String, required: true },
-  lastName: { type: String, required: true },
-  email: { type: String, unique: true },
-  phone: { type: String },
-  ownerId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Users",
-    required: true,
+const LeadSchema = new mongoose.Schema(
+  {
+    firstName: { type: String, required: true },
+    lastName: { type: String, required: true },
+    email: { type: String, unique: true },
+    phone: { type: String },
+    ownerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Users',
+      required: true,
+    },
+    company: { type: String },
+    // Instead of a single string, use an array:
+    notes: [
+      {
+        _id: {
+          type: mongoose.Schema.Types.ObjectId,
+          default: () => new mongoose.Types.ObjectId(),
+        },
+        text: { type: String },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
   },
-  company: { type: String }, 
-  notes: { type: String, default: '' },
-}, { timestamps: true });
+  { timestamps: true }
+);
 
 module.exports = mongoose.model('Lead', LeadSchema);

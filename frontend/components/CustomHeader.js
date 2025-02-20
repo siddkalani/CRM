@@ -1,30 +1,29 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const CustomHeader = ({
   navigation,
   title = 'Home',
-  showBackButton = false, // <-- new prop to control Back Button
+  showBackButton = false,
+  onSearchChange = () => {}, // <-- callback for search text
 }) => {
   const [searchMode, setSearchMode] = useState(false);
   const [searchText, setSearchText] = useState('');
 
-  // Get device's safe area padding (ensures consistent alignment)
-  const insets = useSafeAreaInsets();
+  const handleSearchInput = (text) => {
+    setSearchText(text);
+    onSearchChange(text);  // <-- notify parent
+  };
 
   return (
     <SafeAreaView className="bg-blue-500">
       <View className="flex-row items-center px-4" style={{ height: 56 }}>
-        
         {searchMode ? (
-          // ----------------------
-          // Search Mode Header
-          // ----------------------
           <>
             {/* Back Button to exit Search Mode */}
-            <TouchableOpacity onPress={() => setSearchMode(false)} style={{ marginRight: 10 }}>
+            <TouchableOpacity onPress={() => { setSearchMode(false); handleSearchInput(''); }} style={{ marginRight: 10 }}>
               <Ionicons name="arrow-back" size={24} color="white" />
             </TouchableOpacity>
 
@@ -33,22 +32,18 @@ const CustomHeader = ({
               className="flex-1 bg-white px-3 py-2 rounded-md text-base"
               placeholder="Search All Modules"
               value={searchText}
-              onChangeText={setSearchText}
+              onChangeText={handleSearchInput}
               autoFocus
-              style={{ height: 40 }} // Ensures consistent height
+              style={{ height: 40 }}
             />
 
-            {/* Close (X) Button */}
-            <TouchableOpacity onPress={() => setSearchText('')} style={{ marginLeft: 10 }}>
+            {/* Clear (X) Button */}
+            <TouchableOpacity onPress={() => handleSearchInput('')} style={{ marginLeft: 10 }}>
               <Ionicons name="close" size={24} color="white" />
             </TouchableOpacity>
           </>
         ) : (
-          // -----------------------
-          // Default Header Mode
-          // -----------------------
           <>
-            {/* Conditionally show the Back Button based on the prop */}
             {showBackButton && (
               <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 10 }}>
                 <Ionicons name="arrow-back" size={24} color="white" />
