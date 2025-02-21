@@ -15,29 +15,31 @@ const LeadsScreen = ({ navigation }) => {
         Alert.alert('Error', 'User not logged in');
         return;
       }
-      // Adjust the endpoint URL if necessary
-      const response = await fetch(`${BASE_URL}/api/lead/${userId}`, {
+      // Use the "user/:userId" endpoint
+      const response = await fetch(`${BASE_URL}/api/lead/user/${userId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
       });
+
       if (!response.ok) {
         const errorData = await response.json();
         Alert.alert('Error', errorData.message || 'Failed to fetch leads.');
         return;
       }
+
+      // If your controller returns { leads: [...] },
+      // destructure that array to get the list of leads.
       const data = await response.json();
-      // Adjust according to your API response structure
-      setLeads(data.leads || data);
+      setLeads(data.leads || []);
     } catch (error) {
       Alert.alert('Error', 'An error occurred while fetching leads.');
       console.error(error);
     }
   };
 
-  // useFocusEffect will run fetchLeads every time the screen is focused,
-  // ensuring the list is always up-to-date.
+  // Use useFocusEffect to fetch leads each time the screen refocuses
   useFocusEffect(
     React.useCallback(() => {
       fetchLeads();
@@ -61,7 +63,8 @@ const LeadsScreen = ({ navigation }) => {
       {/* ——————————— Leads List ——————————— */}
       <FlatList
         data={leads}
-        keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
+        // If your lead documents have an `_id` field, use that as the key
+        keyExtractor={(item) => item._id?.toString() || Math.random().toString()}
         renderItem={({ item }) => (
           <TouchableOpacity
             onPress={() => navigation.navigate('LeadDetailsScreen', { lead: item })}

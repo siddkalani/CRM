@@ -6,66 +6,80 @@ import { BASE_URL } from '../../constants/constant';
 import { useFocusEffect } from '@react-navigation/native';
 
 const ContactScreen = ({ navigation }) => {
-  const [leads, setLeads] = useState([]);
+  const [contacts, setContacts] = useState([]);
 
-  const fetchLeads = async () => {
+  const fetchContacts = async () => {
     try {
       const userId = await AsyncStorage.getItem('userId');
       if (!userId) {
         Alert.alert('Error', 'User not logged in');
         return;
       }
-      // Adjust the endpoint URL if necessary
-      const response = await fetch(`${BASE_URL}/api/contacts/${userId}`, {
+
+      // Must match GET /api/contact/user/:userId
+      const response = await fetch(`${BASE_URL}/api/contacts/user/${userId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
       });
+
       if (!response.ok) {
         const errorData = await response.json();
-        Alert.alert('Error', errorData.message || 'Failed to fetch leads.');
+        Alert.alert('Error', errorData.message || 'Failed to fetch contacts.');
         return;
       }
+
       const data = await response.json();
-      // Adjust according to your API response structure
-      setLeads(data.contacts || data);
+      // data should be { contacts: [...] }
+      setContacts(data.contacts || []);
     } catch (error) {
-      Alert.alert('Error', 'An error occurred while fetching leads.');
+      Alert.alert('Error', 'An error occurred while fetching contacts.');
       console.error(error);
     }
   };
 
-  // useFocusEffect will run fetchLeads every time the screen is focused,
-  // ensuring the list is always up-to-date.
+  // Refresh list whenever screen is in focus
   useFocusEffect(
     React.useCallback(() => {
-      fetchLeads();
+      fetchContacts();
     }, [])
   );
 
   return (
-    <View className="flex-1 bg-white">
-      {/* ——————————— Filter Bar ——————————— */}
-      <View className="flex-row items-center justify-between px-4 py-3 border-b border-gray-300">
-        <View className="flex-row items-center">
-          <Text className="text-blue-500 text-base font-bold">All Leads</Text>
-        </View>
-        <View className="flex-row items-center">
-          <TouchableOpacity>
-            <Ionicons name="filter-circle-outline" size={24} color="gray" />
-          </TouchableOpacity>
-        </View>
+    <View style={{ flex: 1, backgroundColor: '#fff' }}>
+      {/* Header */}
+      <View style={{ 
+        flexDirection: 'row', 
+        alignItems: 'center', 
+        justifyContent: 'space-between', 
+        paddingHorizontal: 16, 
+        paddingVertical: 12, 
+        borderBottomWidth: 1, 
+        borderBottomColor: '#ccc'
+      }}>
+        <Text style={{ fontWeight: 'bold', color: '#007BFF' }}>
+          All Contacts
+        </Text>
+        <TouchableOpacity>
+          <Ionicons name="filter-circle-outline" size={24} color="gray" />
+        </TouchableOpacity>
       </View>
 
-      {/* ——————————— Leads List ——————————— */}
+      {/* Contact List */}
       <FlatList
-        data={leads}
-        keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
+        data={contacts}
+        keyExtractor={(item) => item._id?.toString()}
         renderItem={({ item }) => (
           <TouchableOpacity
-            onPress={() => navigation.navigate('ContactDetailsScreen', { lead: item })}
-            className="flex-row items-center p-4 border-b border-gray-200"
+            onPress={() => navigation.navigate('ContactDetailsScreen', { contact: item })}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              padding: 16,
+              borderBottomWidth: 1,
+              borderBottomColor: '#eee',
+            }}
           >
             <Ionicons
               name="person-circle"
@@ -73,23 +87,38 @@ const ContactScreen = ({ navigation }) => {
               color="#999"
               style={{ marginRight: 12 }}
             />
-            <View className="flex-1">
-              <Text className="text-black text-base font-semibold">
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontWeight: '600', color: '#000' }}>
                 {item.firstName} {item.lastName}
               </Text>
-              <Text className="text-gray-600">{item.email}</Text>
+              <Text style={{ color: '#666' }}>{item.email}</Text>
             </View>
           </TouchableOpacity>
         )}
       />
 
-      {/* ——————————— Floating Action Button ——————————— */}
-      <View className="absolute bottom-10 right-10">
+      {/* Floating Action Button */}
+      <View style={{
+        position: 'absolute',
+        bottom: 40,
+        right: 20
+      }}>
         <TouchableOpacity
-          className="bg-blue-500 w-14 h-14 rounded-full items-center justify-center shadow-lg"
+          style={{
+            backgroundColor: '#007BFF',
+            width: 56,
+            height: 56,
+            borderRadius: 28,
+            alignItems: 'center',
+            justifyContent: 'center',
+            shadowColor: '#000',
+            shadowOpacity: 0.3,
+            shadowRadius: 4,
+            elevation: 5,
+          }}
           onPress={() => navigation.navigate('AddContactScreen')}
         >
-          <Ionicons name="add" size={28} color="white" />
+          <Ionicons name="add" size={28} color="#fff" />
         </TouchableOpacity>
       </View>
     </View>

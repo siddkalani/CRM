@@ -11,18 +11,8 @@ const connectDB = async () => {
     console.error('MongoDB connection error:', error);
     process.exit(1);
   }
+
+  
 };
-// const Lead = require("../models/leadModel"); // Adjust the path to your model
-
-// async function fixNotesField() {
-//   await Lead.updateMany(
-//     { notes: { $exists: false } }, // Only update leads without notes
-//     { $set: { notes: [] } }
-//   );
-//   console.log("Fixed missing notes field.");
-//   mongoose.disconnect();
-// }
-
-// fixNotesField();
 
 module.exports = connectDB;

@@ -10,60 +10,86 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BASE_URL } from '../../constants/constant';
+import { useFocusEffect } from '@react-navigation/native';
 
 const LeadDetailsScreen = ({ route, navigation }) => {
-  const [leadDetails, setLeadDetails] = useState([]);
+  // 1) Extract the lead from navigation params
+  const lead = route.params?.lead;
+  // 2) The lead's actual Mongo _id
+  const leadId = lead?._id;
+
+  // 3) Our local state to store the “fresh” details from server
+  const [leadDetails, setLeadDetails] = useState(lead || null);
+
+  // 4) State for new note creation, plus editing
   const [newNote, setNewNote] = useState('');
   const [editNoteId, setEditNoteId] = useState(null);
   const [editNoteText, setEditNoteText] = useState('');
 
-  // Pull lead from route.params
-  const lead = route.params?.lead;
-  // Extract the ID from that route lead
-  const leadId = lead?._id;
+  // -------------------------------------------
+  // (A) FETCH / REFRESH THE SINGLE LEAD
+  // -------------------------------------------
+  const fetchLeadDetails = async (id) => {
+    try {
+      // Use the "one/:leadId" endpoint
+      const response = await fetch(`${BASE_URL}/api/lead/one/${id}`, {
+        headers: {
+          // Helps avoid 304 responses if you were seeing that issue
+          'Cache-Control': 'no-cache',
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch lead details');
+      }
+      const data = await response.json();
+      setLeadDetails(data);
+    } catch (error) {
+      console.error('Error fetching lead:', error);
+    }
+  };
 
-  // Fetch lead details on mount or when leadId changes
+  // (B) EFFECT: On mount (and when leadId changes), fetch the lead
   useEffect(() => {
     if (leadId) {
       fetchLeadDetails(leadId);
     }
   }, [leadId]);
 
-  const fetchLeadDetails = async (id) => {
-    try {
-      const response = await fetch(`${BASE_URL}/api/lead/${id}`, {
-        method: 'GET',
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache',
-          'Expires': '0',
-          'Content-Type': 'application/json',
-        },
-      });
-      if (!response.ok) throw new Error('Failed to fetch lead');
+  // (C) OPTIONAL POLLING via useFocusEffect
+  useFocusEffect(
+    React.useCallback(() => {
+      let intervalId;
+      if (leadId) {
+        // Example: poll every 30 seconds
+        // intervalId = setInterval(() => fetchLeadDetails(leadId), 30000);
+      }
+      return () => {
+        if (intervalId) clearInterval(intervalId);
+      };
+    }, [leadId])
+  );
 
-      const data = await response.json();
-      setLeadDetails(data);
-    } catch (err) {
-      Alert.alert('Error', 'Failed to fetch lead details.');
-    }
-  };
-
+  // -------------------------------------------
+  // (D) NOTES: CREATE, EDIT, DELETE
+  // -------------------------------------------
   const handleAddNote = async () => {
     if (!newNote.trim()) return;
-
     try {
-      const response = await fetch(`${BASE_URL}/api/lead/${leadId}/notes`, {
+      // POST /api/lead/one/:leadId/notes
+      const response = await fetch(`${BASE_URL}/api/lead/one/${leadId}/notes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: newNote.trim() }),
       });
-      if (!response.ok) throw new Error('Failed to add note');
-
-      setLeadDetails(await response.json());
+      if (!response.ok) {
+        throw new Error('Failed to add note');
+      }
+      const updatedLead = await response.json();
+      setLeadDetails(updatedLead);
       setNewNote('');
-    } catch {
+    } catch (error) {
       Alert.alert('Error', 'Failed to add note.');
+      console.error(error);
     }
   };
 
@@ -74,38 +100,51 @@ const LeadDetailsScreen = ({ route, navigation }) => {
 
   const handleSaveEditedNote = async () => {
     try {
+      // PUT /api/lead/one/:leadId/notes/:noteId
       const response = await fetch(
-        `${BASE_URL}/api/lead/${leadId}/notes/${editNoteId}`,
+        `${BASE_URL}/api/lead/one/${leadId}/notes/${editNoteId}`,
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ text: editNoteText }),
         }
       );
-      if (!response.ok) throw new Error('Failed to update note');
-
-      setLeadDetails(await response.json());
+      if (!response.ok) {
+        throw new Error('Failed to update note');
+      }
+      const updatedLead = await response.json();
+      setLeadDetails(updatedLead);
       setEditNoteId(null);
       setEditNoteText('');
-    } catch {
+    } catch (error) {
       Alert.alert('Error', 'Failed to update note.');
+      console.error(error);
     }
   };
 
   const handleDeleteNote = async (noteId) => {
     try {
+      // DELETE /api/lead/one/:leadId/notes/:noteId
       const response = await fetch(
-        `${BASE_URL}/api/lead/${leadId}/notes/${noteId}`,
-        { method: 'DELETE' }
+        `${BASE_URL}/api/lead/one/${leadId}/notes/${noteId}`,
+        {
+          method: 'DELETE',
+        }
       );
-      if (!response.ok) throw new Error('Failed to delete note');
-
-      setLeadDetails(await response.json());
-    } catch {
+      if (!response.ok) {
+        throw new Error('Failed to delete note');
+      }
+      const updatedLead = await response.json();
+      setLeadDetails(updatedLead);
+    } catch (error) {
       Alert.alert('Error', 'Failed to delete note.');
+      console.error(error);
     }
   };
 
+  // -------------------------------------------
+  // (E) RENDER
+  // -------------------------------------------
   if (!leadDetails) {
     return (
       <View className="flex-1 items-center justify-center">
@@ -121,11 +160,13 @@ const LeadDetailsScreen = ({ route, navigation }) => {
         <View className="flex-row items-center mb-4">
           <View className="flex-1 mr-2">
             <Text className="text-base font-semibold">
-              Ms. {lead.firstName} {lead.lastName}
+              Ms. {leadDetails.firstName} {leadDetails.lastName}
             </Text>
-            <Text className="text-blue-500 mt-1">{lead.email}</Text>
-            <Text className="mt-1">{lead.phone}</Text>
-            {!!lead.company && <Text className="mt-1">{lead.company}</Text>}
+            <Text className="text-blue-500 mt-1">{leadDetails.email}</Text>
+            <Text className="mt-1">{leadDetails.phone}</Text>
+            {!!leadDetails.company && (
+              <Text className="mt-1">{leadDetails.company}</Text>
+            )}
 
             <TouchableOpacity className="border border-blue-500 rounded px-2 py-1 mt-2 self-start">
               <Text className="text-blue-500">+ Tag</Text>
@@ -158,8 +199,8 @@ const LeadDetailsScreen = ({ route, navigation }) => {
         {/* Existing Notes */}
         <View className="mt-4">
           <Text className="font-semibold text-lg">Notes</Text>
-          {lead.notes && lead.notes.length > 0 ? (
-            lead.notes.map((note) => (
+          {Array.isArray(leadDetails.notes) && leadDetails.notes.length > 0 ? (
+            leadDetails.notes.map((note) => (
               <View
                 key={note._id}
                 className="border border-gray-200 rounded p-3 mt-2"
@@ -196,7 +237,6 @@ const LeadDetailsScreen = ({ route, navigation }) => {
                     <Text className="text-gray-500 text-xs mt-1">
                       {new Date(note.createdAt).toLocaleString()}
                     </Text>
-
                     <View className="flex-row mt-2">
                       <TouchableOpacity
                         onPress={() => handleEditNote(note._id, note.text)}
@@ -205,7 +245,6 @@ const LeadDetailsScreen = ({ route, navigation }) => {
                         <Ionicons name="create-outline" size={16} color="blue" />
                         <Text className="text-blue-500 ml-1">Edit</Text>
                       </TouchableOpacity>
-
                       <TouchableOpacity
                         onPress={() => handleDeleteNote(note._id)}
                         className="flex-row items-center"
@@ -236,4 +275,3 @@ const LeadDetailsScreen = ({ route, navigation }) => {
 };
 
 export default LeadDetailsScreen;
-

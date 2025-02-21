@@ -1,162 +1,326 @@
-
-import React, { useState, useLayoutEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   ScrollView,
   Image,
-  TextInput
+  TextInput,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useDispatch } from 'react-redux';
-import { updateLeadNotes } from '../../store/LeadSlice'; 
 import { BASE_URL } from '../../constants/constant';
+import { useFocusEffect } from '@react-navigation/native';
 
 const ContactDetailsScreen = ({ route, navigation }) => {
-  // Retrieve lead data (make sure the lead includes an _id field if coming from your backend)
-  const lead = route.params?.lead || {
-    _id: '123456', // sample id; in production this should come from your backend
-    firstName: 'Carissa',
-    lastName: 'Kidman (Sample)',
-    email: 'carissa-kidman@noemail.invalid',
-    phone: '555-555-5555',
-    owner: 'siddharth kalani',
-    notes: ''
-  };
+  // 1) Extract the contact object from navigation params
+  const contactParam = route.params?.contact;
+  // 2) The contact's MongoDB _id
+  const contactId = contactParam?._id;
 
-  // Tab state (RELATED, EMAILS, DETAILS)
-  const [activeTab, setActiveTab] = useState('RELATED');
+  // 3) Local state to store the “fresh” contact details from server
+  const [contactDetails, setContactDetails] = useState(contactParam || null);
 
-  // Notes state (typed only, no voice)
-  const [notes, setNotes] = useState(lead.notes || '');
+  // 4) State for new note creation
+  const [newNote, setNewNote] = useState('');
 
-  const dispatch = useDispatch();
+  // Editing note states
+  const [editNoteId, setEditNoteId] = useState(null);
+  const [editNoteText, setEditNoteText] = useState('');
 
-  // Pencil icon in header
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      title: 'Leads',
-      headerRight: () => (
-        <Ionicons
-          name="pencil"
-          size={24}
-          color="#fff"
-          style={{ marginRight: 16 }}
-          onPress={() => {
-            navigation.navigate('EditLeadDetails', { lead });
-          }}
-        />
-      ),
-    });
-  }, [navigation, lead]);
-
-  // Render top tabs
-  const renderTabs = () => {
-    const tabs = ['RELATED', 'EMAILS', 'DETAILS'];
-    return (
-      <View className="flex-row bg-blue-500">
-        {tabs.map((tab) => {
-          const isActive = tab === activeTab;
-          return (
-            <TouchableOpacity
-              key={tab}
-              onPress={() => setActiveTab(tab)}
-              className={`py-3 px-4 ${isActive ? 'border-b-2 border-white' : ''}`}
-            >
-              <Text className={`text-white ${isActive ? 'font-bold' : 'font-semibold'}`}>
-                {tab}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-    );
-  };
-
-  // Handler for saving notes
-  const handleSaveNotes = async() => {
+  // -------------------------------------------
+  // (A) FETCH / REFRESH THE SINGLE CONTACT
+  // -------------------------------------------
+  const fetchContactDetails = async (id) => {
     try {
-      // Backend URL (replace with your API endpoint)
-      const apiUrl = `${BASE_URL}/api/contacts/${lead._id}/notes`;
-
-      // Make API call to update notes
-      const response = await fetch(apiUrl, {
-        method: "PUT",
+      // GET /api/contact/one/:contactId
+      const response = await fetch(`${BASE_URL}/api/contacts/one/${id}`, {
         headers: {
-          "Content-Type": "application/json",
+          // Helps avoid 304 responses
+          'Cache-Control': 'no-cache',
         },
-        body: JSON.stringify({ notes }),
       });
-
       if (!response.ok) {
-        throw new Error("Failed to update notes");
+        throw new Error('Failed to fetch contact details');
       }
-
       const data = await response.json();
-
-      // Optionally, dispatch an action or update the local state with the response
-      dispatch({ type: "UPDATE_LEAD_NOTES_SUCCESS", payload: data });
-
-      alert("Notes updated successfully!");
+      setContactDetails(data);
     } catch (error) {
-      console.error("Error updating notes:", error);
-      alert("Failed to update notes. Please try again.");
+      console.error('Error fetching contact:', error);
     }
   };
 
+  // (B) EFFECT: On mount (and when contactId changes), fetch the contact
+  useEffect(() => {
+    if (contactId) {
+      fetchContactDetails(contactId);
+    }
+  }, [contactId]);
+
+  // (C) OPTIONAL POLLING via useFocusEffect
+  useFocusEffect(
+    React.useCallback(() => {
+      let intervalId;
+      if (contactId) {
+        // Example: poll every 30 seconds
+        // intervalId = setInterval(() => fetchContactDetails(contactId), 30000);
+      }
+      return () => {
+        if (intervalId) clearInterval(intervalId);
+      };
+    }, [contactId])
+  );
+
+  // -------------------------------------------
+  // (D) NOTES: CREATE, EDIT, DELETE
+  // -------------------------------------------
+  const handleAddNote = async () => {
+    if (!newNote.trim()) return;
+    try {
+      // POST /api/contact/one/:contactId/notes
+      const response = await fetch(`${BASE_URL}/api/contacts/one/${contactId}/notes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: newNote.trim() }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to add note');
+      }
+      const updatedContact = await response.json();
+      setContactDetails(updatedContact);
+      setNewNote('');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to add note.');
+      console.error(error);
+    }
+  };
+
+  const handleEditNote = (noteId, currentText) => {
+    setEditNoteId(noteId);
+    setEditNoteText(currentText);
+  };
+
+  const handleSaveEditedNote = async () => {
+    try {
+      // PUT /api/contact/one/:contactId/notes/:noteId
+      const response = await fetch(
+        `${BASE_URL}/api/contacts/one/${contactId}/notes/${editNoteId}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: editNoteText }),
+        }
+      );
+      if (!response.ok) {
+        throw new Error('Failed to update note');
+      }
+      const updatedContact = await response.json();
+      setContactDetails(updatedContact);
+      setEditNoteId(null);
+      setEditNoteText('');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to update note.');
+      console.error(error);
+    }
+  };
+
+  const handleDeleteNote = async (noteId) => {
+    try {
+      // DELETE /api/contact/one/:contactId/notes/:noteId
+      const response = await fetch(
+        `${BASE_URL}/api/contacts/one/${contactId}/notes/${noteId}`,
+        {
+          method: 'DELETE',
+        }
+      );
+      if (!response.ok) {
+        throw new Error('Failed to delete note');
+      }
+      const updatedContact = await response.json();
+      setContactDetails(updatedContact);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to delete note.');
+      console.error(error);
+    }
+  };
+
+  // -------------------------------------------
+  // (E) RENDER
+  // -------------------------------------------
+  if (!contactDetails) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Text>Loading contact details...</Text>
+      </View>
+    );
+  }
+
   return (
-    <View className="flex-1 bg-white">
-      {renderTabs()}
-
+    <View style={{ flex: 1, backgroundColor: '#fff' }}>
       <ScrollView contentContainerStyle={{ padding: 16 }}>
-        {/* Lead Info Row */}
-        <View className="flex-row items-center mb-4">
-          <View className="flex-1 mr-2">
-            <Text className="text-base font-semibold">
-              Ms. {lead.firstName} {lead.lastName}
+        {/* Contact Info */}
+        <View style={{ flexDirection: 'row', marginBottom: 16 }}>
+          <View style={{ flex: 1, marginRight: 8 }}>
+            <Text style={{ fontSize: 16, fontWeight: '600' }}>
+              {contactDetails.firstName} {contactDetails.lastName}
             </Text>
-            <Text className="text-blue-500 mt-1">{lead.email}</Text>
-            <Text className="mt-1">{lead.phone}</Text>
+            <Text style={{ color: '#007BFF', marginTop: 4 }}>{contactDetails.email}</Text>
+            <Text style={{ marginTop: 4 }}>{contactDetails.phone}</Text>
+            {!!contactDetails.company && (
+              <Text style={{ marginTop: 4 }}>{contactDetails.company}</Text>
+            )}
 
-            {/* Tag Button */}
-            <TouchableOpacity className="border border-blue-500 rounded px-2 py-1 mt-2 self-start">
-              <Text className="text-blue-500">+ Tag</Text>
+            <TouchableOpacity
+              style={{
+                borderWidth: 1,
+                borderColor: '#007BFF',
+                borderRadius: 4,
+                paddingHorizontal: 8,
+                paddingVertical: 4,
+                marginTop: 8,
+                alignSelf: 'flex-start',
+              }}
+            >
+              <Text style={{ color: '#007BFF' }}>+ Tag</Text>
             </TouchableOpacity>
           </View>
-
-          {/* Placeholder Lead Image */}
           <Image
             source={{ uri: 'https://via.placeholder.com/60' }}
-            className="w-[60px] h-[60px] rounded-full"
+            style={{ width: 60, height: 60, borderRadius: 30 }}
           />
         </View>
 
-        {/* NOTES area */}
-        <View className="mt-4 border-t border-gray-300 py-3">
-          <Text className="font-semibold mb-2">Add Notes</Text>
-
-          {/* Text input for typed notes */}
+        {/* Add New Note */}
+        <View style={{ borderTopWidth: 1, borderTopColor: '#ccc', paddingTop: 12 }}>
+          <Text style={{ fontWeight: '600', marginBottom: 8 }}>Add a New Note</Text>
           <TextInput
-            className="border border-gray-300 rounded p-2 min-h-[60px] text-base"
-            placeholder="Type your notes here..."
+            style={{
+              borderWidth: 1,
+              borderColor: '#ccc',
+              borderRadius: 4,
+              padding: 8,
+              minHeight: 60,
+              textAlignVertical: 'top',
+            }}
+            placeholder="Type your new note here..."
             multiline
-            value={notes}
-            onChangeText={setNotes}
+            value={newNote}
+            onChangeText={setNewNote}
           />
-
-          {/* Save Notes Button */}
           <TouchableOpacity
-            onPress={handleSaveNotes}
-            className="bg-blue-500 rounded px-4 py-2 mt-2 self-start"
+            onPress={handleAddNote}
+            style={{
+              backgroundColor: '#007BFF',
+              borderRadius: 4,
+              paddingVertical: 8,
+              paddingHorizontal: 16,
+              marginTop: 8,
+              alignSelf: 'flex-start',
+            }}
           >
-            <Text className="text-white">Save Notes</Text>
+            <Text style={{ color: '#fff' }}>Save Note</Text>
           </TouchableOpacity>
+        </View>
+
+        {/* Existing Notes */}
+        <View style={{ marginTop: 16 }}>
+          <Text style={{ fontWeight: '600', fontSize: 16 }}>Notes</Text>
+          {Array.isArray(contactDetails.notes) && contactDetails.notes.length > 0 ? (
+            contactDetails.notes.map((note) => (
+              <View
+                key={note._id}
+                style={{
+                  borderWidth: 1,
+                  borderColor: '#ccc',
+                  borderRadius: 4,
+                  padding: 8,
+                  marginTop: 8,
+                }}
+              >
+                {editNoteId === note._id ? (
+                  <>
+                    <TextInput
+                      style={{
+                        borderWidth: 1,
+                        borderColor: '#ccc',
+                        borderRadius: 4,
+                        padding: 8,
+                        minHeight: 40,
+                        textAlignVertical: 'top',
+                      }}
+                      multiline
+                      value={editNoteText}
+                      onChangeText={setEditNoteText}
+                    />
+                    <View style={{ flexDirection: 'row', marginTop: 8 }}>
+                      <TouchableOpacity
+                        onPress={handleSaveEditedNote}
+                        style={{
+                          backgroundColor: 'green',
+                          paddingVertical: 4,
+                          paddingHorizontal: 12,
+                          borderRadius: 4,
+                          marginRight: 8,
+                        }}
+                      >
+                        <Text style={{ color: '#fff' }}>Save</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setEditNoteId(null);
+                          setEditNoteText('');
+                        }}
+                        style={{
+                          backgroundColor: '#999',
+                          paddingVertical: 4,
+                          paddingHorizontal: 12,
+                          borderRadius: 4,
+                        }}
+                      >
+                        <Text style={{ color: '#fff' }}>Cancel</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                ) : (
+                  <>
+                    <Text style={{ fontSize: 14 }}>{note.text}</Text>
+                    <Text style={{ color: '#666', fontSize: 12, marginTop: 4 }}>
+                      {new Date(note.createdAt).toLocaleString()}
+                    </Text>
+                    <View style={{ flexDirection: 'row', marginTop: 8 }}>
+                      <TouchableOpacity
+                        onPress={() => handleEditNote(note._id, note.text)}
+                        style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}
+                      >
+                        <Ionicons name="create-outline" size={16} color="blue" />
+                        <Text style={{ color: 'blue', marginLeft: 4 }}>Edit</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => handleDeleteNote(note._id)}
+                        style={{ flexDirection: 'row', alignItems: 'center' }}
+                      >
+                        <Ionicons name="trash-outline" size={16} color="red" />
+                        <Text style={{ color: 'red', marginLeft: 4 }}>Delete</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                )}
+              </View>
+            ))
+          ) : (
+            <Text style={{ marginTop: 8, color: '#666' }}>No notes available.</Text>
+          )}
         </View>
       </ScrollView>
 
-      {/* Bottom navigation bar */}
-      <View className="flex-row border-t border-gray-300 justify-around py-2">
+      {/* Bottom Navigation */}
+      <View style={{
+        flexDirection: 'row',
+        borderTopWidth: 1,
+        borderTopColor: '#ccc',
+        justifyContent: 'space-around',
+        paddingVertical: 8,
+      }}>
         <Ionicons name="mail-outline" size={24} color="#666" />
         <Ionicons name="checkmark-done-outline" size={24} color="#666" />
         <Ionicons name="map-outline" size={24} color="#666" />
