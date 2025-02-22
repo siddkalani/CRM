@@ -1,5 +1,4 @@
-// LeadsScreen.js
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -47,7 +46,6 @@ const LeadsScreen = ({ navigation }) => {
     }, [])
   );
 
-  // Updated search function: returns leads and matched notes
   const handleSearchChange = (text) => {
     setSearchText(text);
 
@@ -62,21 +60,16 @@ const LeadsScreen = ({ navigation }) => {
       const fullName = `${lead.firstName || ''} ${lead.lastName || ''}`.toLowerCase();
       const email = (lead.email || '').toLowerCase();
 
-      // Check for notes match
       const matchedNotes = Array.isArray(lead.notes)
         ? lead.notes.filter((note) =>
             note.text && note.text.toLowerCase().includes(lowerText)
           )
         : [];
 
-      // Check if lead name/email matches
       const leadMatches = fullName.includes(lowerText) || email.includes(lowerText);
 
       if (leadMatches || matchedNotes.length > 0) {
-        acc.push({
-          ...lead,
-          matchedNotes, // <-- Add matched notes
-        });
+        acc.push({ ...lead, matchedNotes });
       }
 
       return acc;
@@ -93,6 +86,15 @@ const LeadsScreen = ({ navigation }) => {
         onSearchChange={handleSearchChange}
       />
 
+      {/* Filter Panel */}
+      <View className="flex-row items-center justify-between px-4 py-3 border-b border-gray-300">
+        <Text className="text-blue-500 text-base font-bold">All Leads</Text>
+        <TouchableOpacity>
+          <Ionicons name="filter-circle-outline" size={24} color="gray" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Leads List */}
       <FlatList
         data={filteredLeads}
         keyExtractor={(item) => item._id?.toString()}
@@ -118,7 +120,6 @@ const LeadsScreen = ({ navigation }) => {
               </View>
             </View>
 
-            {/* Show matched notes if any */}
             {item.matchedNotes && item.matchedNotes.length > 0 && (
               <View className="mt-2 ml-12">
                 {item.matchedNotes.map((note) => (
@@ -131,6 +132,16 @@ const LeadsScreen = ({ navigation }) => {
           </TouchableOpacity>
         )}
       />
+
+      {/* Floating Action Button */}
+      <View style={{ position: 'absolute', bottom: 40, right: 20 }}>
+        <TouchableOpacity
+          className="bg-blue-500 w-14 h-14 rounded-full items-center justify-center shadow-lg"
+          onPress={() => navigation.navigate('AddLeadScreen')}
+        >
+          <Ionicons name="add" size={28} color="white" />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
