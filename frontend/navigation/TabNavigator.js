@@ -46,12 +46,12 @@ export default function TabNavigator() {
       <Tab.Screen
         name="Leads"
         component={LeadsScreen}
-        options={{ header: (props) => <CustomHeader {...props} title="Leads" /> }}
+        options={{ headerShown: false }}
       />
       <Tab.Screen
         name="Contacts"
         component={ContactScreen}
-        options={{ header: (props) => <CustomHeader {...props} title="Contacts" /> }}
+        options={{ headerShown: false }}
       />
       {/* <Tab.Screen
         name="Profile"

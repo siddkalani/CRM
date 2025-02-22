@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from '../../constants/constant';
 import { useFocusEffect } from '@react-navigation/native';
+import CustomHeader from '../../components/CustomHeader';
 
 const ContactScreen = ({ navigation }) => {
   const [contacts, setContacts] = useState([]);
+  const [filteredContacts, setFilteredContacts] = useState([]);
+  const [searchText, setSearchText] = useState('');
 
   const fetchContacts = async () => {
     try {
@@ -16,12 +19,10 @@ const ContactScreen = ({ navigation }) => {
         return;
       }
 
-      // Must match GET /api/contact/user/:userId
+      // Ensure notes are returned with contacts
       const response = await fetch(`${BASE_URL}/api/contacts/user/${userId}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
       });
 
       if (!response.ok) {
@@ -31,24 +32,68 @@ const ContactScreen = ({ navigation }) => {
       }
 
       const data = await response.json();
-      // data should be { contacts: [...] }
-      setContacts(data.contacts || []);
+      const allContacts = data.contacts || [];
+      setContacts(allContacts);
+      setFilteredContacts(allContacts);
     } catch (error) {
       Alert.alert('Error', 'An error occurred while fetching contacts.');
       console.error(error);
     }
   };
 
-  // Refresh list whenever screen is in focus
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       fetchContacts();
     }, [])
   );
 
+  // Search logic to filter contacts and matched notes
+  const handleSearchChange = (text) => {
+    setSearchText(text);
+
+    if (!text.trim()) {
+      setFilteredContacts(contacts);
+      return;
+    }
+
+    const lowerText = text.toLowerCase();
+
+    const matchedContacts = contacts.reduce((acc, contact) => {
+      const fullName = `${contact.firstName || ''} ${contact.lastName || ''}`.toLowerCase();
+      const email = (contact.email || '').toLowerCase();
+
+      // Check notes for matches
+      const matchedNotes = Array.isArray(contact.notes)
+        ? contact.notes.filter((note) =>
+            note.text && note.text.toLowerCase().includes(lowerText)
+          )
+        : [];
+
+      const contactMatches = fullName.includes(lowerText) || email.includes(lowerText);
+
+      if (contactMatches || matchedNotes.length > 0) {
+        acc.push({
+          ...contact,
+          matchedNotes, // Attach matched notes
+        });
+      }
+
+      return acc;
+    }, []);
+
+    setFilteredContacts(matchedContacts);
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
-      {/* Header */}
+      {/* Custom Header with Search */}
+      <CustomHeader
+        navigation={navigation}
+        title="Contacts"
+        onSearchChange={handleSearchChange}
+      />
+
+      {/* Filter Bar */}
       <View style={{ 
         flexDirection: 'row', 
         alignItems: 'center', 
@@ -66,33 +111,46 @@ const ContactScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      {/* Contact List */}
+      {/* Contact List with matched notes */}
       <FlatList
-        data={contacts}
+        data={filteredContacts}
         keyExtractor={(item) => item._id?.toString()}
         renderItem={({ item }) => (
           <TouchableOpacity
-            onPress={() => navigation.navigate('ContactDetailsScreen', { contact: item })}
+            onPress={() =>
+              navigation.navigate('ContactDetailsScreen', { contact: item })
+            }
             style={{
-              flexDirection: 'row',
-              alignItems: 'center',
               padding: 16,
               borderBottomWidth: 1,
               borderBottomColor: '#eee',
             }}
           >
-            <Ionicons
-              name="person-circle"
-              size={40}
-              color="#999"
-              style={{ marginRight: 12 }}
-            />
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontWeight: '600', color: '#000' }}>
-                {item.firstName} {item.lastName}
-              </Text>
-              <Text style={{ color: '#666' }}>{item.email}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons
+                name="person-circle"
+                size={40}
+                color="#999"
+                style={{ marginRight: 12 }}
+              />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontWeight: '600', color: '#000' }}>
+                  {item.firstName} {item.lastName}
+                </Text>
+                <Text style={{ color: '#666' }}>{item.email}</Text>
+              </View>
             </View>
+
+            {/* Display matched notes if any */}
+            {item.matchedNotes && item.matchedNotes.length > 0 && (
+              <View style={{ marginTop: 6, marginLeft: 52 }}>
+                {item.matchedNotes.map((note) => (
+                  <Text key={note._id} style={{ color: '#555', fontSize: 14 }}>
+                    • {note.text}
+                  </Text>
+                ))}
+              </View>
+            )}
           </TouchableOpacity>
         )}
       />
