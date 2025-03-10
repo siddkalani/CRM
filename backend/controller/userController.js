@@ -38,7 +38,6 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 })
 
-
 const loginUser = asyncHandler(async (req, res) => {
     console.log(process.env.ACCESS_TOKEN_SECRET)
     const { email, password } = req.body;
@@ -93,8 +92,7 @@ const updateUser = asyncHandler(async (req, res) => {
     await user.save();
     // Return the updated fields as JSON
     res.status(200).json({ username: user.username, password: user.password });
-  });
+});
   
-
 
 module.exports = { registerUser, loginUser, currentUser , updateUser }
