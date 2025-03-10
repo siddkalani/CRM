@@ -3,6 +3,7 @@ const errorHandler = require('./middleware/errorHandler');
 const connectDb = require('./config/dbConnection');
 const dotenv = require('dotenv').config();
 const morgan = require('morgan');
+
 const contactRoutes = require('../backend/routes/contactRoutes');
 const userRoutes = require('../backend/routes/userRoutes');
 const otpRoutes = require('../backend/routes/otpRoutes');
