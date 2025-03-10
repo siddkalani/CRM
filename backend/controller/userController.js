@@ -71,5 +71,30 @@ const currentUser = asyncHandler(async (req, res) => {
     res.json(req.user);
 });
 
+const updateUser = asyncHandler(async (req, res) => {
+    // req.user is from validateToken middleware
+    const userId = req.user.id;
+    const { username, password } = req.body;
+  
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404);
+      throw new Error('User not found');
+    }
+  
+    // Update fields if they were passed in the request
+    if (username) user.username = username;
+    if (password) {
+      // be sure to hash the new password
+      const hashed = await bcrypt.hash(password, 10);
+      user.password = hashed;
+    }
+  
+    await user.save();
+    // Return the updated fields as JSON
+    res.status(200).json({ username: user.username, password: user.password });
+  });
+  
 
-module.exports = { registerUser, loginUser, currentUser }
+
+module.exports = { registerUser, loginUser, currentUser , updateUser }

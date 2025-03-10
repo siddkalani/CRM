@@ -25,7 +25,7 @@ export default function TabNavigator() {
           } else if (route.name === 'Contacts') {
             iconName = focused ? 'people' : 'people-outline';
           } else if (route.name === 'Profile') {
-            iconName = focused ? 'person' : 'person-outline';
+            iconName = focused ? 'person-circle' : 'person-circle-outline';
           } else {
             iconName = 'help-circle-outline';
           }
@@ -53,11 +53,17 @@ export default function TabNavigator() {
         component={ContactScreen}
         options={{ headerShown: false }}
       />
-      {/* <Tab.Screen
+      <Tab.Screen
         name="Profile"
         component={MoreScreen}
-        options={{ header: (props) => <CustomHeader {...props} title="Profile" /> }}
-      /> */}
+        options={{ header: (props) => (
+          <CustomHeader 
+            {...props} 
+            title="About me" 
+            showSearchButton={false} // hide search button on Profile tab
+          />
+        ), }}
+      />
     </Tab.Navigator>
   );
 }

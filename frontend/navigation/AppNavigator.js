@@ -36,13 +36,6 @@ export default function AppNavigator() {
           component={TabNavigator}
           options={{ headerShown: false }}
         />
-
-        {/* Home Screen, uses default header */}
-        <Stack.Screen
-          name="Home"
-          component={HomeScreen}
-        />
-
         {/* AddLeadScreen with custom header and back button enabled */}
         <Stack.Screen
           name="AddLeadScreen"

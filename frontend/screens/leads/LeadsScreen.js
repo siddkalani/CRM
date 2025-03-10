@@ -61,9 +61,7 @@ const LeadsScreen = ({ navigation }) => {
       const email = (lead.email || '').toLowerCase();
 
       const matchedNotes = Array.isArray(lead.notes)
-        ? lead.notes.filter((note) =>
-            note.text && note.text.toLowerCase().includes(lowerText)
-          )
+        ? lead.notes.filter((note) => note.text && note.text.toLowerCase().includes(lowerText))
         : [];
 
       const leadMatches = fullName.includes(lowerText) || email.includes(lowerText);
@@ -80,15 +78,28 @@ const LeadsScreen = ({ navigation }) => {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
+      {/* Custom Header with Search */}
       <CustomHeader
         navigation={navigation}
         title="Leads"
         onSearchChange={handleSearchChange}
       />
 
-      {/* Filter Panel */}
-      <View className="flex-row items-center justify-between px-4 py-3 border-b border-gray-300">
-        <Text className="text-blue-500 text-base font-bold">All Leads</Text>
+      {/* Filter Bar (exactly as in ContactScreen) */}
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingHorizontal: 16,
+          paddingVertical: 12,
+          borderBottomWidth: 1,
+          borderBottomColor: '#ccc',
+        }}
+      >
+        <Text style={{ fontWeight: 'bold', color: '#007BFF' }}>
+          All Leads
+        </Text>
         <TouchableOpacity>
           <Ionicons name="filter-circle-outline" size={24} color="gray" />
         </TouchableOpacity>
@@ -100,12 +111,14 @@ const LeadsScreen = ({ navigation }) => {
         keyExtractor={(item) => item._id?.toString()}
         renderItem={({ item }) => (
           <TouchableOpacity
-            onPress={() =>
-              navigation.navigate('LeadDetailsScreen', { lead: item })
-            }
-            className="p-4 border-b border-gray-200"
+            onPress={() => navigation.navigate('LeadDetailsScreen', { lead: item })}
+            style={{
+              padding: 16,
+              borderBottomWidth: 1,
+              borderBottomColor: '#eee',
+            }}
           >
-            <View className="flex-row items-center">
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Ionicons
                 name="person-circle"
                 size={40}
@@ -113,17 +126,17 @@ const LeadsScreen = ({ navigation }) => {
                 style={{ marginRight: 12 }}
               />
               <View style={{ flex: 1 }}>
-                <Text className="text-black text-base font-semibold">
+                <Text style={{ fontWeight: '600', color: '#000' }}>
                   {item.firstName} {item.lastName}
                 </Text>
-                <Text className="text-gray-600">{item.email}</Text>
+                <Text style={{ color: '#666' }}>{item.email}</Text>
               </View>
             </View>
 
             {item.matchedNotes && item.matchedNotes.length > 0 && (
-              <View className="mt-2 ml-12">
+              <View style={{ marginTop: 6, marginLeft: 52 }}>
                 {item.matchedNotes.map((note) => (
-                  <Text key={note._id} className="text-gray-700 text-sm">
+                  <Text key={note._id} style={{ color: '#555', fontSize: 14 }}>
                     • {note.text}
                   </Text>
                 ))}
@@ -133,13 +146,24 @@ const LeadsScreen = ({ navigation }) => {
         )}
       />
 
-      {/* Floating Action Button */}
+      {/* Floating Action Button (exactly as in ContactScreen) */}
       <View style={{ position: 'absolute', bottom: 40, right: 20 }}>
         <TouchableOpacity
-          className="bg-blue-500 w-14 h-14 rounded-full items-center justify-center shadow-lg"
+          style={{
+            backgroundColor: '#007BFF',
+            width: 56,
+            height: 56,
+            borderRadius: 28,
+            alignItems: 'center',
+            justifyContent: 'center',
+            shadowColor: '#000',
+            shadowOpacity: 0.3,
+            shadowRadius: 4,
+            elevation: 5,
+          }}
           onPress={() => navigation.navigate('AddLeadScreen')}
         >
-          <Ionicons name="add" size={28} color="white" />
+          <Ionicons name="add" size={28} color="#fff" />
         </TouchableOpacity>
       </View>
     </View>

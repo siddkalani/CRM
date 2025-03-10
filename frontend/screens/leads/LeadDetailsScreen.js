@@ -13,30 +13,22 @@ import { BASE_URL } from '../../constants/constant';
 import { useFocusEffect } from '@react-navigation/native';
 
 const LeadDetailsScreen = ({ route, navigation }) => {
-  // 1) Extract the lead from navigation params
+  // Extract lead and its id
   const lead = route.params?.lead;
-  // 2) The lead's actual Mongo _id
   const leadId = lead?._id;
 
-  // 3) Our local state to store the “fresh” details from server
+  // Local state
   const [leadDetails, setLeadDetails] = useState(lead || null);
-
-  // 4) State for new note creation, plus editing
   const [newNote, setNewNote] = useState('');
   const [editNoteId, setEditNoteId] = useState(null);
   const [editNoteText, setEditNoteText] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
 
-  // -------------------------------------------
-  // (A) FETCH / REFRESH THE SINGLE LEAD
-  // -------------------------------------------
+  // Fetch lead details from the server
   const fetchLeadDetails = async (id) => {
     try {
-      // Use the "one/:leadId" endpoint
       const response = await fetch(`${BASE_URL}/api/lead/one/${id}`, {
-        headers: {
-          // Helps avoid 304 responses if you were seeing that issue
-          'Cache-Control': 'no-cache',
-        },
+        headers: { 'Cache-Control': 'no-cache' },
       });
       if (!response.ok) {
         throw new Error('Failed to fetch lead details');
@@ -48,34 +40,29 @@ const LeadDetailsScreen = ({ route, navigation }) => {
     }
   };
 
-  // (B) EFFECT: On mount (and when leadId changes), fetch the lead
   useEffect(() => {
     if (leadId) {
       fetchLeadDetails(leadId);
     }
   }, [leadId]);
 
-  // (C) OPTIONAL POLLING via useFocusEffect
   useFocusEffect(
     React.useCallback(() => {
       let intervalId;
       if (leadId) {
-        // Example: poll every 30 seconds
-        // intervalId = setInterval(() => fetchLeadDetails(leadId), 30000);
+        // Optional polling: intervalId = setInterval(() => fetchLeadDetails(leadId), 30000);
       }
       return () => {
         if (intervalId) clearInterval(intervalId);
       };
     }, [leadId])
   );
-
-  // -------------------------------------------
-  // (D) NOTES: CREATE, EDIT, DELETE
-  // -------------------------------------------
+  // ========================
+  // Note Handlers
+  // ========================
   const handleAddNote = async () => {
     if (!newNote.trim()) return;
     try {
-      // POST /api/lead/one/:leadId/notes
       const response = await fetch(`${BASE_URL}/api/lead/one/${leadId}/notes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -100,15 +87,11 @@ const LeadDetailsScreen = ({ route, navigation }) => {
 
   const handleSaveEditedNote = async () => {
     try {
-      // PUT /api/lead/one/:leadId/notes/:noteId
-      const response = await fetch(
-        `${BASE_URL}/api/lead/one/${leadId}/notes/${editNoteId}`,
-        {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: editNoteText }),
-        }
-      );
+      const response = await fetch(`${BASE_URL}/api/lead/one/${leadId}/notes/${editNoteId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: editNoteText }),
+      });
       if (!response.ok) {
         throw new Error('Failed to update note');
       }
@@ -124,13 +107,9 @@ const LeadDetailsScreen = ({ route, navigation }) => {
 
   const handleDeleteNote = async (noteId) => {
     try {
-      // DELETE /api/lead/one/:leadId/notes/:noteId
-      const response = await fetch(
-        `${BASE_URL}/api/lead/one/${leadId}/notes/${noteId}`,
-        {
-          method: 'DELETE',
-        }
-      );
+      const response = await fetch(`${BASE_URL}/api/lead/one/${leadId}/notes/${noteId}`, {
+        method: 'DELETE',
+      });
       if (!response.ok) {
         throw new Error('Failed to delete note');
       }
@@ -142,9 +121,7 @@ const LeadDetailsScreen = ({ route, navigation }) => {
     }
   };
 
-  // -------------------------------------------
-  // (E) RENDER
-  // -------------------------------------------
+  // Render loading state if lead details are not yet available
   if (!leadDetails) {
     return (
       <View className="flex-1 items-center justify-center">
@@ -164,10 +141,7 @@ const LeadDetailsScreen = ({ route, navigation }) => {
             </Text>
             <Text className="text-blue-500 mt-1">{leadDetails.email}</Text>
             <Text className="mt-1">{leadDetails.phone}</Text>
-            {!!leadDetails.company && (
-              <Text className="mt-1">{leadDetails.company}</Text>
-            )}
-
+            {!!leadDetails.company && <Text className="mt-1">{leadDetails.company}</Text>}
             <TouchableOpacity className="border border-blue-500 rounded px-2 py-1 mt-2 self-start">
               <Text className="text-blue-500">+ Tag</Text>
             </TouchableOpacity>
@@ -178,16 +152,25 @@ const LeadDetailsScreen = ({ route, navigation }) => {
           />
         </View>
 
-        {/* Add New Note */}
+        {/* Add New Note with Speech-to-Text */}
         <View className="mt-4 border-t border-gray-300 py-3">
           <Text className="font-semibold mb-2">Add a New Note</Text>
-          <TextInput
-            className="border border-gray-300 rounded p-2 min-h-[60px] text-base"
-            placeholder="Type your new note here..."
-            multiline
-            value={newNote}
-            onChangeText={setNewNote}
-          />
+          <View className="flex-row items-center">
+            <TextInput
+              className="border border-gray-300 rounded p-2 min-h-[60px] text-base flex-1"
+              placeholder="Type your new note here..."
+              multiline
+              value={newNote}
+              onChangeText={setNewNote}
+            />
+            {/* Mic Icon for Speech-to-Text */}
+            {/* <TouchableOpacity
+              onPress={isRecording ? stopRecording : startRecording}
+              className="ml-2 p-2 rounded-full bg-blue-500 items-center justify-center"
+            >
+              <Ionicons name={isRecording ? 'mic-off' : 'mic'} size={24} color="#fff" />
+            </TouchableOpacity> */}
+          </View>
           <TouchableOpacity
             onPress={handleAddNote}
             className="bg-blue-500 rounded px-4 py-2 mt-2 self-start"
@@ -201,10 +184,7 @@ const LeadDetailsScreen = ({ route, navigation }) => {
           <Text className="font-semibold text-lg">Notes</Text>
           {Array.isArray(leadDetails.notes) && leadDetails.notes.length > 0 ? (
             leadDetails.notes.map((note) => (
-              <View
-                key={note._id}
-                className="border border-gray-200 rounded p-3 mt-2"
-              >
+              <View key={note._id} className="border border-gray-200 rounded p-3 mt-2">
                 {editNoteId === note._id ? (
                   <>
                     <TextInput
