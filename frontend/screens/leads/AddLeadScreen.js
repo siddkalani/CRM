@@ -25,7 +25,7 @@ const AddLeadScreen = ({ navigation }) => {
     };
 
     try {
-      const response = await fetch(`${BASE_URL}/api/lead/${userId}`, {
+      const response = await fetch(`${BASE_URL}/api/lead/user/${userId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newLead),

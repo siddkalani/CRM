@@ -25,7 +25,7 @@ const AddContactScreen = ({ navigation }) => {
     };
 
     try {
-      const response = await fetch(`${BASE_URL}/api/contacts/${userId}`, {
+      const response = await fetch(`${BASE_URL}/api/contacts/user/${userId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newLead),
@@ -41,7 +41,7 @@ const AddContactScreen = ({ navigation }) => {
       await response.json();
 
       // Show success alert and navigate back on confirmation
-      Alert.alert('Success', 'Lead added successfully.', [
+      Alert.alert('Success', 'Contact added successfully.', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
     } catch (error) {
