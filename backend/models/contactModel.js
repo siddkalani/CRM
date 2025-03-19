@@ -4,7 +4,7 @@ const contactSchema = new mongoose.Schema(
   {
     ownerId: {
       type: mongoose.Schema.Types.ObjectId,
-      required: true,
+      // required: true,
       ref: 'User',
     },
     firstName: {
@@ -13,15 +13,16 @@ const contactSchema = new mongoose.Schema(
     },
     lastName: {
       type: String,
-      required: [true, 'Please add last name'],
+      // required: [true, 'Please add last name'],
     },
     email: {
       type: String,
-      required: [true, 'Please add email'],
+
+      // required: [true, 'Please add email'],
     },
     phone: {
       type: String,
-      required: [true, 'Please add phone'],
+      // required: [true, 'Please add phone'],
     },
     notes: [
       {
