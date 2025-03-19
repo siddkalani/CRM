@@ -246,8 +246,7 @@ const LeadDetailsScreen = ({ route, navigation }) => {
       {/* Bottom Navigation */}
       <View className="flex-row border-t border-gray-300 justify-around py-2">
         <Ionicons name="mail-outline" size={24} color="#666" />
-        <Ionicons name="checkmark-done-outline" size={24} color="#666" />
-        <Ionicons name="map-outline" size={24} color="#666" />
+        <Ionicons name="share-outline" size={24} color="#666" />
         <Ionicons name="call-outline" size={24} color="#666" />
       </View>
     </View>

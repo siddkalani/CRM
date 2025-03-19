@@ -5,7 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from '../../constants/constant';
 
 const AddLeadScreen = ({ navigation }) => {
-  // State for each field
+
   const [company, setCompany] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -177,3 +177,4 @@ const AddLeadScreen = ({ navigation }) => {
 };
 
 export default AddLeadScreen;
+
