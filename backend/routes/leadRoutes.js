@@ -6,6 +6,7 @@ const {
   addLead,
   getLeadById,
   updateLead,
+  deleteLead,
 } = require('../controller/leadController');
 
 /**
@@ -101,6 +102,10 @@ router.put('/one/:leadId/notes/:noteId', async (req, res) => {
  * 3) DELETE a specific note from a lead
  *    DELETE /api/lead/one/:leadId/notes/:noteId
  */
+
+//delete lead 
+router.route('/:leadId').delete(deleteLead)
+
 router.delete('/one/:leadId/notes/:noteId', async (req, res) => {
   try {
     const lead = await Lead.findById(req.params.leadId);

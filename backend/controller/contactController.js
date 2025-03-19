@@ -59,10 +59,23 @@ const deleteContact = asyncHandler(async (req, res) => {
   res.status(200).json({ message: 'Contact deleted successfully.' });
 });
 
+const uploadContactFile = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: 'No file uploaded.' });
+  }
+
+  const fileUrl = req.file.location; // File URL from S3
+  res.status(200).json({
+    message: 'File uploaded successfully.',
+    fileUrl,
+  });
+});
+
 module.exports = {
   getContacts,
   addContact,
   getContactById,
   updateContact,
   deleteContact,
+  uploadContactFile
 };
