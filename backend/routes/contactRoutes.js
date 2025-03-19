@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const asyncHandler = require('express-async-handler');
+const uploadm = require('../config/s3Config');
+
 
 // IMPORTANT: Make sure to import the Contact model for the notes routes
 const Contact = require('../models/contactModel');
@@ -12,6 +14,7 @@ const {
   getContactById,
   updateContact,
   deleteContact,
+  uploadContactFile
 } = require('../controller/contactController');
 
 /**
