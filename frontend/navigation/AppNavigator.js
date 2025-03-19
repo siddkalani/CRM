@@ -74,15 +74,7 @@ export default function AppNavigator() {
           name="ContactDetailsScreen"
           component={ContactDetailsScreen}
           // The title is also overridden in the screen with useLayoutEffect
-          options={{
-            header: (props) => (
-              <CustomHeader
-                {...props}
-                title="Lead details"
-                showBackButton={true} // <-- only set this prop for AddLeadScreen
-              />
-            ),
-          }}
+          options={{ headerShown: false }}
           // options={{ title: 'Leads' }}
         />
         

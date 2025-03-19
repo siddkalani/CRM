@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,17 +11,24 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { BASE_URL } from '../../constants/constant';
 import { useFocusEffect } from '@react-navigation/native';
+import CustomHeader from '../../components/CustomHeader'; // <-- Import your custom header
 
 const ContactDetailsScreen = ({ route, navigation }) => {
-  // 1) Extract the contact object from navigation params
+  // Extract the contact object from navigation params
   const contactParam = route.params?.contact;
-  // 2) The contact's MongoDB _id
+  // The contact's MongoDB _id
   const contactId = contactParam?._id;
 
-  // 3) Local state to store the “fresh” contact details from server
+  // Local state to store the “fresh” contact details from server
   const [contactDetails, setContactDetails] = useState(contactParam || null);
 
-  // 4) State for new note creation
+  // -------------------
+  // SEARCH FOR NOTES
+  // -------------------
+  const [searchText, setSearchText] = useState('');
+  const [filteredNotes, setFilteredNotes] = useState([]);
+
+  // State for new note creation
   const [newNote, setNewNote] = useState('');
 
   // Editing note states
@@ -33,10 +40,8 @@ const ContactDetailsScreen = ({ route, navigation }) => {
   // -------------------------------------------
   const fetchContactDetails = async (id) => {
     try {
-      // GET /api/contact/one/:contactId
       const response = await fetch(`${BASE_URL}/api/contacts/one/${id}`, {
         headers: {
-          // Helps avoid 304 responses
           'Cache-Control': 'no-cache',
         },
       });
@@ -45,6 +50,11 @@ const ContactDetailsScreen = ({ route, navigation }) => {
       }
       const data = await response.json();
       setContactDetails(data);
+
+      // Initialize filteredNotes once we have the data
+      if (data.notes && Array.isArray(data.notes)) {
+        setFilteredNotes(data.notes);
+      }
     } catch (error) {
       console.error('Error fetching contact:', error);
     }
@@ -59,7 +69,7 @@ const ContactDetailsScreen = ({ route, navigation }) => {
 
   // (C) OPTIONAL POLLING via useFocusEffect
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       let intervalId;
       if (contactId) {
         // Example: poll every 30 seconds
@@ -77,7 +87,6 @@ const ContactDetailsScreen = ({ route, navigation }) => {
   const handleAddNote = async () => {
     if (!newNote.trim()) return;
     try {
-      // POST /api/contact/one/:contactId/notes
       const response = await fetch(`${BASE_URL}/api/contacts/one/${contactId}/notes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -89,6 +98,15 @@ const ContactDetailsScreen = ({ route, navigation }) => {
       const updatedContact = await response.json();
       setContactDetails(updatedContact);
       setNewNote('');
+
+      // Also refresh filteredNotes
+      if (updatedContact.notes && Array.isArray(updatedContact.notes)) {
+        setFilteredNotes(updatedContact.notes);
+        // Re-apply search if user is currently searching
+        if (searchText.trim()) {
+          filterNotes(searchText, updatedContact.notes);
+        }
+      }
     } catch (error) {
       Alert.alert('Error', 'Failed to add note.');
       console.error(error);
@@ -102,7 +120,6 @@ const ContactDetailsScreen = ({ route, navigation }) => {
 
   const handleSaveEditedNote = async () => {
     try {
-      // PUT /api/contact/one/:contactId/notes/:noteId
       const response = await fetch(
         `${BASE_URL}/api/contacts/one/${contactId}/notes/${editNoteId}`,
         {
@@ -116,8 +133,18 @@ const ContactDetailsScreen = ({ route, navigation }) => {
       }
       const updatedContact = await response.json();
       setContactDetails(updatedContact);
+
+      // Reset editing
       setEditNoteId(null);
       setEditNoteText('');
+
+      // Refresh filteredNotes
+      if (updatedContact.notes && Array.isArray(updatedContact.notes)) {
+        setFilteredNotes(updatedContact.notes);
+        if (searchText.trim()) {
+          filterNotes(searchText, updatedContact.notes);
+        }
+      }
     } catch (error) {
       Alert.alert('Error', 'Failed to update note.');
       console.error(error);
@@ -126,7 +153,6 @@ const ContactDetailsScreen = ({ route, navigation }) => {
 
   const handleDeleteNote = async (noteId) => {
     try {
-      // DELETE /api/contact/one/:contactId/notes/:noteId
       const response = await fetch(
         `${BASE_URL}/api/contacts/one/${contactId}/notes/${noteId}`,
         {
@@ -138,6 +164,14 @@ const ContactDetailsScreen = ({ route, navigation }) => {
       }
       const updatedContact = await response.json();
       setContactDetails(updatedContact);
+
+      // Refresh filteredNotes
+      if (updatedContact.notes && Array.isArray(updatedContact.notes)) {
+        setFilteredNotes(updatedContact.notes);
+        if (searchText.trim()) {
+          filterNotes(searchText, updatedContact.notes);
+        }
+      }
     } catch (error) {
       Alert.alert('Error', 'Failed to delete note.');
       console.error(error);
@@ -145,7 +179,27 @@ const ContactDetailsScreen = ({ route, navigation }) => {
   };
 
   // -------------------------------------------
-  // (E) RENDER
+  // (E) SEARCH HANDLERS
+  // -------------------------------------------
+  const handleSearchChange = (text) => {
+    setSearchText(text);
+    filterNotes(text, contactDetails.notes || []);
+  };
+
+  const filterNotes = (searchValue, notesArray) => {
+    if (!searchValue.trim()) {
+      setFilteredNotes(notesArray);
+      return;
+    }
+    const lowerText = searchValue.toLowerCase();
+    const matched = notesArray.filter((note) =>
+      note.text?.toLowerCase().includes(lowerText)
+    );
+    setFilteredNotes(matched);
+  };
+
+  // -------------------------------------------
+  // (F) RENDER
   // -------------------------------------------
   if (!contactDetails) {
     return (
@@ -157,6 +211,16 @@ const ContactDetailsScreen = ({ route, navigation }) => {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
+
+      {/* Custom Header with search */}
+      <CustomHeader
+        navigation={navigation}
+        title="Contact Details"
+        showBackButton={true}
+        showSearchButton={true}
+        onSearchChange={handleSearchChange}
+      />
+
       <ScrollView contentContainerStyle={{ padding: 16 }}>
         {/* Contact Info */}
         <View style={{ flexDirection: 'row', marginBottom: 16 }}>
@@ -222,11 +286,11 @@ const ContactDetailsScreen = ({ route, navigation }) => {
           </TouchableOpacity>
         </View>
 
-        {/* Existing Notes */}
+        {/* Filtered Notes */}
         <View style={{ marginTop: 16 }}>
           <Text style={{ fontWeight: '600', fontSize: 16 }}>Notes</Text>
-          {Array.isArray(contactDetails.notes) && contactDetails.notes.length > 0 ? (
-            contactDetails.notes.map((note) => (
+          {Array.isArray(filteredNotes) && filteredNotes.length > 0 ? (
+            filteredNotes.map((note) => (
               <View
                 key={note._id}
                 style={{
@@ -290,7 +354,11 @@ const ContactDetailsScreen = ({ route, navigation }) => {
                     <View style={{ flexDirection: 'row', marginTop: 8 }}>
                       <TouchableOpacity
                         onPress={() => handleEditNote(note._id, note.text)}
-                        style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          marginRight: 16,
+                        }}
                       >
                         <Ionicons name="create-outline" size={16} color="blue" />
                         <Text style={{ color: 'blue', marginLeft: 4 }}>Edit</Text>
@@ -314,13 +382,15 @@ const ContactDetailsScreen = ({ route, navigation }) => {
       </ScrollView>
 
       {/* Bottom Navigation */}
-      <View style={{
-        flexDirection: 'row',
-        borderTopWidth: 1,
-        borderTopColor: '#ccc',
-        justifyContent: 'space-around',
-        paddingVertical: 8,
-      }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          borderTopWidth: 1,
+          borderTopColor: '#ccc',
+          justifyContent: 'space-around',
+          paddingVertical: 8,
+        }}
+      >
         <Ionicons name="mail-outline" size={24} color="#666" />
         <Ionicons name="checkmark-done-outline" size={24} color="#666" />
         <Ionicons name="map-outline" size={24} color="#666" />
