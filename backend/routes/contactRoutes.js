@@ -95,6 +95,9 @@ router.put(
   })
 );
 
+//delete contact 
+router.route('/:contactId').delete(deleteContact)
+
 // 3) DELETE a specific note
 // DELETE /api/contact/one/:contactId/notes/:noteId
 router.delete(
