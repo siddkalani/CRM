@@ -24,7 +24,7 @@
         "android.permission.RECORD_AUDIO",
         "android.permission.RECORD_AUDIO"
       ],
-      "package": "com.siddharth2709.frontend"
+      "package": "com.siddharth2709.datamate"
     },
     "web": {
       "favicon": "./assets/exploration.png",

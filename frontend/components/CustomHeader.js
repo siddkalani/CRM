@@ -4,10 +4,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const CustomHeader = ({
-  navigation,
+  navigation,           // <-- Make sure to destructure navigation
   title = 'Home',
   showBackButton = false,
-  showSearchButton = true, // new prop to conditionally show/hide search
+  showSearchButton = true,
   onSearchChange = () => {},
 }) => {
   const [searchMode, setSearchMode] = useState(false);
@@ -19,10 +19,11 @@ const CustomHeader = ({
   };
 
   return (
-    <SafeAreaView className="bg-blue-500">
-      <View className="flex-row items-center px-4" style={{ height: 56 }}>
+    <SafeAreaView style={{ backgroundColor: '#007BFF' }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', height: 56, paddingHorizontal: 16 }}>
         {searchMode ? (
           <>
+            {/* Back Button in Search Mode */}
             <TouchableOpacity
               onPress={() => {
                 setSearchMode(false);
@@ -34,12 +35,17 @@ const CustomHeader = ({
             </TouchableOpacity>
 
             <TextInput
-              className="flex-1 bg-white px-3 py-2 rounded-md text-base"
-              placeholder="Search All Modules"
+              style={{
+                flex: 1,
+                backgroundColor: '#fff',
+                paddingHorizontal: 8,
+                paddingVertical: 8,
+                borderRadius: 8,
+              }}
+              placeholder="Search..."
               value={searchText}
               onChangeText={handleSearchInput}
               autoFocus
-              style={{ height: 40 }}
             />
 
             <TouchableOpacity
@@ -51,7 +57,8 @@ const CustomHeader = ({
           </>
         ) : (
           <>
-            {showBackButton && (
+            {/* Back Button in Normal Mode */}
+            {showBackButton && navigation && (
               <TouchableOpacity
                 onPress={() => navigation.goBack()}
                 style={{ marginRight: 10 }}
@@ -60,7 +67,7 @@ const CustomHeader = ({
               </TouchableOpacity>
             )}
 
-            <Text className="text-white text-lg font-semibold flex-1">
+            <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 18, flex: 1 }}>
               {title}
             </Text>
 

@@ -16,7 +16,7 @@ export default function App() {
   return (
     <>
     <Provider store={store}>
-      <StatusBar style="auto" />
+      <StatusBar style="auto"/>
       <AppNavigator />
       </Provider>
     </>
