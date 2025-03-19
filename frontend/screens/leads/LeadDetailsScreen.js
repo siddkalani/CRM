@@ -7,31 +7,30 @@ import {
   Image,
   TextInput,
   Alert,
-  PermissionsAndroid,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { BASE_URL } from "../../constants/constant";
 import { useFocusEffect } from "@react-navigation/native";
-import CustomHeader from "../../components/CustomHeader"; // <-- Custom Header
-import Voice from "@react-native-voice/voice"; // <-- Import Speech Recognition
+import CustomHeader from "../../components/CustomHeader"; // <-- import your custom header
 
 const LeadDetailsScreen = ({ route, navigation }) => {
-  // Extract lead and ID
+  // Extract lead and its id
   const lead = route.params?.lead;
   const leadId = lead?._id;
 
   // Local state
   const [leadDetails, setLeadDetails] = useState(lead || null);
+
+  // ----> NEW: For Searching Notes
   const [searchText, setSearchText] = useState("");
   const [filteredNotes, setFilteredNotes] = useState([]);
+
   const [newNote, setNewNote] = useState("");
   const [editNoteId, setEditNoteId] = useState(null);
   const [editNoteText, setEditNoteText] = useState("");
   const [isRecording, setIsRecording] = useState(false);
 
-  // ----------------------------------------
-  // 🔹 FETCH LEAD DETAILS FROM SERVER
-  // ----------------------------------------
+  // Fetch lead details from the server
   const fetchLeadDetails = async (id) => {
     try {
       const response = await fetch(`${BASE_URL}/api/lead/one/${id}`, {
@@ -42,6 +41,7 @@ const LeadDetailsScreen = ({ route, navigation }) => {
       }
       const data = await response.json();
       setLeadDetails(data);
+      // Update filteredNotes as soon as we fetch new data
       if (data.notes && Array.isArray(data.notes)) {
         setFilteredNotes(data.notes);
       }
@@ -56,78 +56,22 @@ const LeadDetailsScreen = ({ route, navigation }) => {
     }
   }, [leadId]);
 
-  // ----------------------------------------
-  // 🔹 AUDIO PERMISSION REQUEST
-  // ----------------------------------------
-  const requestAudioPermission = async () => {
-    try {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
-        {
-          title: "Speech Recognition Permission",
-          message: "This app needs access to your microphone for speech recognition.",
-          buttonPositive: "OK",
-        }
-      );
-      return granted === PermissionsAndroid.RESULTS.GRANTED;
-    } catch (err) {
-      console.warn(err);
-      return false;
-    }
-  };
+  // Optional polling in focus effect
+  useFocusEffect(
+    useCallback(() => {
+      let intervalId;
+      if (leadId) {
+        // e.g. intervalId = setInterval(() => fetchLeadDetails(leadId), 30000);
+      }
+      return () => {
+        if (intervalId) clearInterval(intervalId);
+      };
+    }, [leadId])
+  );
 
-  // ----------------------------------------
-  // 🔹 SPEECH RECOGNITION HANDLERS
-  // ----------------------------------------
-  const onSpeechResults = (event) => {
-    if (event.value && event.value.length > 0) {
-      setNewNote(event.value[0]); // Set recognized text in input field
-    }
-  };
-
-  const onSpeechError = (event) => {
-    Alert.alert("Speech Error", event.error.message || "An error occurred");
-    setIsRecording(false);
-  };
-
-  useEffect(() => {
-    Voice.onSpeechResults = onSpeechResults;
-    Voice.onSpeechError = onSpeechError;
-
-    return () => {
-      Voice.destroy().then(Voice.removeAllListeners);
-    };
-  }, []);
-
-  const startRecording = async () => {
-    const permissionGranted = await requestAudioPermission();
-    if (!permissionGranted) {
-      Alert.alert("Permission Denied", "Microphone access is required for speech recognition.");
-      return;
-    }
-
-    try {
-      setIsRecording(true);
-      await Voice.start("en-US");
-    } catch (error) {
-      console.error("startRecording error:", error);
-      setIsRecording(false);
-    }
-  };
-
-  const stopRecording = async () => {
-    try {
-      await Voice.stop();
-      setIsRecording(false);
-    } catch (error) {
-      console.error("stopRecording error:", error);
-      setIsRecording(false);
-    }
-  };
-
-  // ----------------------------------------
-  // 🔹 NOTE HANDLING FUNCTIONS
-  // ----------------------------------------
+  // ---------------
+  // NOTE HANDLERS
+  // ---------------
   const handleAddNote = async () => {
     if (!newNote.trim()) return;
     try {
@@ -141,80 +85,330 @@ const LeadDetailsScreen = ({ route, navigation }) => {
       }
       const updatedLead = await response.json();
       setLeadDetails(updatedLead);
+
+      // Reset newNote and re-filter
       setNewNote("");
-      setFilteredNotes(updatedLead.notes);
+      if (updatedLead.notes && Array.isArray(updatedLead.notes)) {
+        setFilteredNotes(updatedLead.notes);
+        // Also re-apply search filter if needed
+        if (searchText.trim()) {
+          filterNotes(searchText, updatedLead.notes);
+        }
+      }
     } catch (error) {
       Alert.alert("Error", "Failed to add note.");
       console.error(error);
     }
   };
 
-  // ----------------------------------------
-  // 🔹 SEARCH NOTES FUNCTIONALITY
-  // ----------------------------------------
+  const handleEditNote = (noteId, currentText) => {
+    setEditNoteId(noteId);
+    setEditNoteText(currentText);
+  };
+
+  const handleSaveEditedNote = async () => {
+    try {
+      const response = await fetch(
+        `${BASE_URL}/api/lead/one/${leadId}/notes/${editNoteId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: editNoteText }),
+        }
+      );
+      if (!response.ok) {
+        throw new Error("Failed to update note");
+      }
+      const updatedLead = await response.json();
+      setLeadDetails(updatedLead);
+
+      // Reset editing
+      setEditNoteId(null);
+      setEditNoteText("");
+
+      // Also re-filter if needed
+      if (updatedLead.notes && Array.isArray(updatedLead.notes)) {
+        setFilteredNotes(updatedLead.notes);
+        if (searchText.trim()) {
+          filterNotes(searchText, updatedLead.notes);
+        }
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to update note.");
+      console.error(error);
+    }
+  };
+
+  const handleDeleteNote = async (noteId) => {
+    try {
+      const response = await fetch(
+        `${BASE_URL}/api/lead/one/${leadId}/notes/${noteId}`,
+        {
+          method: "DELETE",
+        }
+      );
+      if (!response.ok) {
+        throw new Error("Failed to delete note");
+      }
+      const updatedLead = await response.json();
+      setLeadDetails(updatedLead);
+
+      // Re-filter if needed
+      if (updatedLead.notes && Array.isArray(updatedLead.notes)) {
+        setFilteredNotes(updatedLead.notes);
+        if (searchText.trim()) {
+          filterNotes(searchText, updatedLead.notes);
+        }
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to delete note.");
+      console.error(error);
+    }
+  };
+
+  // ---------------
+  // SEARCH HANDLER
+  // ---------------
   const handleSearchChange = (text) => {
     setSearchText(text);
-    if (!text.trim()) {
-      setFilteredNotes(leadDetails.notes || []);
+    filterNotes(text, leadDetails.notes || []);
+  };
+
+  const filterNotes = (searchValue, notesArray) => {
+    if (!searchValue.trim()) {
+      // If search is empty, show all notes
+      setFilteredNotes(notesArray);
       return;
     }
-    const lowerText = text.toLowerCase();
-    const matched = leadDetails.notes.filter((note) =>
+    const lowerText = searchValue.toLowerCase();
+    const matched = notesArray.filter((note) =>
       note.text?.toLowerCase().includes(lowerText)
     );
     setFilteredNotes(matched);
   };
 
-  // ----------------------------------------
-  // 🔹 UI RENDERING
-  // ----------------------------------------
+  // Render loading state if lead details are not yet available
+  if (!leadDetails) {
+    return (
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+        <Text>Loading lead details...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
-      {/* 🔹 Custom Header */}
+      {/* 1) Custom Header with search input */}
       <CustomHeader
-        navigation={navigation}
+        navigation={navigation} // <-- Ensure you pass navigation
         title="Lead Details"
         onSearchChange={handleSearchChange}
         showBackButton={true}
       />
 
       <ScrollView contentContainerStyle={{ padding: 16 }}>
-        {/* 🔹 Lead Information */}
-        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 16 }}>
+        {/* Lead Info */}
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            marginBottom: 16,
+          }}
+        >
           <View style={{ flex: 1, marginRight: 12 }}>
             <Text style={{ fontSize: 16, fontWeight: "600" }}>
-              {leadDetails.firstName} {leadDetails.lastName}
+              Ms. {leadDetails.firstName} {leadDetails.lastName}
             </Text>
-            <Text style={{ color: "#007BFF", marginTop: 4 }}>{leadDetails.email}</Text>
+            <Text style={{ color: "#007BFF", marginTop: 4 }}>
+              {leadDetails.email}
+            </Text>
             <Text style={{ marginTop: 4 }}>{leadDetails.phone}</Text>
+            {!!leadDetails.company && (
+              <Text style={{ marginTop: 4 }}>{leadDetails.company}</Text>
+            )}
+            <TouchableOpacity
+              style={{
+                borderWidth: 1,
+                borderColor: "#007BFF",
+                borderRadius: 4,
+                paddingHorizontal: 8,
+                paddingVertical: 4,
+                marginTop: 8,
+                alignSelf: "flex-start",
+              }}
+            >
+              <Text style={{ color: "#007BFF" }}>+ Tag</Text>
+            </TouchableOpacity>
           </View>
-          <Image source={{ uri: "https://via.placeholder.com/60" }} style={{ width: 60, height: 60, borderRadius: 30 }} />
+          <Image
+            source={{ uri: "https://via.placeholder.com/60" }}
+            style={{ width: 60, height: 60, borderRadius: 30 }}
+          />
         </View>
 
-        {/* 🔹 Add New Note Section */}
-        <View style={{ marginTop: 8, borderTopWidth: 1, borderTopColor: "#ccc", paddingTop: 8 }}>
-          <Text style={{ fontWeight: "600", marginBottom: 8 }}>Add a New Note</Text>
+        {/* Add New Note */}
+        <View
+          style={{
+            marginTop: 8,
+            borderTopWidth: 1,
+            borderTopColor: "#ccc",
+            paddingTop: 8,
+          }}
+        >
+          <Text style={{ fontWeight: "600", marginBottom: 8 }}>
+            Add a New Note
+          </Text>
           <View style={{ flexDirection: "row", alignItems: "center" }}>
             <TextInput
-              style={{ borderWidth: 1, borderColor: "#ccc", borderRadius: 4, padding: 8, minHeight: 60, flex: 1 }}
-              placeholder="Type or speak your note here..."
+              style={{
+                borderWidth: 1,
+                borderColor: "#ccc",
+                borderRadius: 4,
+                padding: 8,
+                minHeight: 60,
+                flex: 1,
+                textAlignVertical: "top",
+              }}
+              placeholder="Type your new note here..."
               multiline
               value={newNote}
               onChangeText={setNewNote}
             />
-            {/* 🎤 Microphone Button */}
-            <TouchableOpacity
-              onPress={isRecording ? stopRecording : startRecording}
-              style={{ marginLeft: 10, backgroundColor: isRecording ? "#FF0000" : "#007BFF", padding: 10, borderRadius: 50 }}
-            >
-              <Ionicons name={isRecording ? "mic-off" : "mic"} size={24} color="#fff" />
-            </TouchableOpacity>
           </View>
-          <TouchableOpacity onPress={handleAddNote} style={{ backgroundColor: "#007BFF", borderRadius: 4, padding: 10, marginTop: 8 }}>
-            <Text style={{ color: "#fff", textAlign: "center" }}>Save Note</Text>
+          <TouchableOpacity
+            onPress={handleAddNote}
+            style={{
+              backgroundColor: "#007BFF",
+              borderRadius: 4,
+              paddingHorizontal: 16,
+              paddingVertical: 8,
+              marginTop: 8,
+              alignSelf: "flex-start",
+            }}
+          >
+            <Text style={{ color: "#fff" }}>Save Note</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Filtered Notes */}
+        <View style={{ marginTop: 16 }}>
+          <Text style={{ fontSize: 16, fontWeight: "600" }}>Notes</Text>
+          {Array.isArray(filteredNotes) && filteredNotes.length > 0 ? (
+            filteredNotes.map((note) => (
+              <View
+                key={note._id}
+                style={{
+                  borderWidth: 1,
+                  borderColor: "#eee",
+                  borderRadius: 4,
+                  padding: 8,
+                  marginTop: 8,
+                }}
+              >
+                {editNoteId === note._id ? (
+                  <>
+                    <TextInput
+                      style={{
+                        borderWidth: 1,
+                        borderColor: "#ccc",
+                        borderRadius: 4,
+                        padding: 8,
+                        minHeight: 40,
+                        textAlignVertical: "top",
+                      }}
+                      multiline
+                      value={editNoteText}
+                      onChangeText={setEditNoteText}
+                    />
+                    <View style={{ flexDirection: "row", marginTop: 8 }}>
+                      <TouchableOpacity
+                        onPress={handleSaveEditedNote}
+                        style={{
+                          backgroundColor: "green",
+                          paddingHorizontal: 12,
+                          paddingVertical: 6,
+                          borderRadius: 4,
+                          marginRight: 8,
+                        }}
+                      >
+                        <Text style={{ color: "#fff" }}>Save</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setEditNoteId(null);
+                          setEditNoteText("");
+                        }}
+                        style={{
+                          backgroundColor: "#ccc",
+                          paddingHorizontal: 12,
+                          paddingVertical: 6,
+                          borderRadius: 4,
+                        }}
+                      >
+                        <Text style={{ color: "#000" }}>Cancel</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                ) : (
+                  <>
+                    <Text style={{ fontSize: 14 }}>{note.text}</Text>
+                    <Text style={{ fontSize: 12, color: "#666", marginTop: 4 }}>
+                      {new Date(note.createdAt).toLocaleString()}
+                    </Text>
+                    <View style={{ flexDirection: "row", marginTop: 8 }}>
+                      <TouchableOpacity
+                        onPress={() => handleEditNote(note._id, note.text)}
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          marginRight: 16,
+                        }}
+                      >
+                        <Ionicons
+                          name="create-outline"
+                          size={16}
+                          color="blue"
+                        />
+                        <Text style={{ color: "blue", marginLeft: 4 }}>
+                          Edit
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => handleDeleteNote(note._id)}
+                        style={{ flexDirection: "row", alignItems: "center" }}
+                      >
+                        <Ionicons name="trash-outline" size={16} color="red" />
+                        <Text style={{ color: "red", marginLeft: 4 }}>
+                          Delete
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                )}
+              </View>
+            ))
+          ) : (
+            <Text style={{ marginTop: 8, color: "#999" }}>
+              No notes available.
+            </Text>
+          )}
+        </View>
       </ScrollView>
+
+      {/* Bottom Navigation / Actions */}
+      <View
+        style={{
+          flexDirection: "row",
+          borderTopWidth: 1,
+          borderTopColor: "#ccc",
+          justifyContent: "space-around",
+          paddingVertical: 8,
+        }}
+      >
+        <Ionicons name="mail-outline" size={24} color="#666" />
+        <Ionicons name="share-outline" size={24} color="#666" />
+        <Ionicons name="call-outline" size={24} color="#666" />
+      </View>
     </View>
   );
 };

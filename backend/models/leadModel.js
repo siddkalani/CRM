@@ -5,13 +5,13 @@ const mongoose = require('mongoose');
 const LeadSchema = new mongoose.Schema(
   {
     firstName: { type: String, required: true },
-    lastName: { type: String, required: true },
-    email: { type: String, unique: true },
+    lastName: { type: String},
+    email: { type: String },
     phone: { type: String },
     ownerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Users',
-      required: true,
+      // required: true,
     },
     company: { type: String },
     // Instead of a single string, use an array:
