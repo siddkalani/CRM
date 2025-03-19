@@ -1,4 +1,4 @@
-package com.siddharth2709.frontend
+package com.siddharth2709.datamate
 
 import android.os.Build
 import android.os.Bundle
