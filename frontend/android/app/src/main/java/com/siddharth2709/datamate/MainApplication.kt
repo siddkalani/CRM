@@ -1,4 +1,4 @@
-package com.siddharth2709.frontend
+package com.siddharth2709.datamate
 
 import android.app.Application
 import android.content.res.Configuration

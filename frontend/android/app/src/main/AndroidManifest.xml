@@ -26,7 +26,8 @@
         <action android:name="android.intent.action.VIEW"/>
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
-        <data android:scheme="com.siddharth2709.frontend"/>
+        <data android:scheme="com.siddharth2709.datamate"/>
+        <data android:scheme="exp+frontend"/>
       </intent-filter>
     </activity>
   </application>

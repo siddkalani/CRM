@@ -18,7 +18,6 @@ const ContactDetailsScreen = ({ route, navigation }) => {
   const contactParam = route.params?.contact;
   // The contact's MongoDB _id
   const contactId = contactParam?._id;
-
   // Local state to store the “fresh” contact details from server
   const [contactDetails, setContactDetails] = useState(contactParam || null);
 
