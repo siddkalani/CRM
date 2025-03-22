@@ -12,7 +12,8 @@ import { Ionicons } from '@expo/vector-icons';
 import SkeletonLoader from '../../components/SkeletonLoader';
 import { BASE_URL } from '../../constants/constant';
 import CustomHeader from '../../components/CustomHeader';
-import { useVoice } from '../../context/VoiceContext'; // <-- same place you used in header
+import { useVoice } from '../../context/VoiceContext';
+import * as DocumentPicker from 'expo-document-picker'; // <-- add here
 
 const LeadDetailsScreen = ({ route, navigation }) => {
   const lead = route.params?.lead;
@@ -25,6 +26,9 @@ const LeadDetailsScreen = ({ route, navigation }) => {
   const [editNoteId, setEditNoteId] = useState(null);
   const [editNoteText, setEditNoteText] = useState('');
 
+  // For document picker
+  const [attachedDocument, setAttachedDocument] = useState(null);
+
   // Voice from context
   const {
     isRecording,
@@ -34,13 +38,11 @@ const LeadDetailsScreen = ({ route, navigation }) => {
     stopRecording,
   } = useVoice();
 
-  // Whenever recognizedText changes, append it to newNote
   useEffect(() => {
     if (recognizedText) {
       setNewNote((prev) =>
         prev ? `${prev} ${recognizedText}` : recognizedText
       );
-      // Clear recognized text so we don't keep appending repeatedly
       setRecognizedText('');
     }
   }, [recognizedText]);
@@ -60,17 +62,45 @@ const LeadDetailsScreen = ({ route, navigation }) => {
     }
   };
 
+  // Document picker handler
+  const handlePickDocument = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: '*/*',
+        copyToCacheDirectory: true,
+      });
+      if (result.type === 'success') {
+        console.log('Document picked:', result.uri);
+        setAttachedDocument(result);
+      }
+    } catch (error) {
+      console.warn('Document picking failed:', error);
+    }
+  };
+
   const handleAddNote = async () => {
     if (!newNote.trim()) return;
+
     try {
+      // If you want to pass attachedDocument to your server along with the note,
+      // you’ll need to handle that in your backend. For example:
+      //  - Convert it to base64
+      //  - Or send it as a multipart/form-data
+
       const response = await fetch(`${BASE_URL}/api/lead/one/${leadId}/notes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: newNote.trim() }),
+        body: JSON.stringify({ 
+          text: newNote.trim(),
+          // docName: attachedDocument?.name,
+          // docUri: attachedDocument?.uri,
+        }),
       });
       const updatedLead = await response.json();
       setLeadDetails(updatedLead);
       setNewNote('');
+      setAttachedDocument(null); // reset after saving if that's what you want
+
       if (Array.isArray(updatedLead.notes)) {
         setFilteredNotes(updatedLead.notes);
         if (searchText.trim()) {
@@ -89,11 +119,14 @@ const LeadDetailsScreen = ({ route, navigation }) => {
 
   const handleSaveEditedNote = async () => {
     try {
-      const response = await fetch(`${BASE_URL}/api/lead/one/${leadId}/notes/${editNoteId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: editNoteText }),
-      });
+      const response = await fetch(
+        `${BASE_URL}/api/lead/one/${leadId}/notes/${editNoteId}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: editNoteText }),
+        }
+      );
       const updatedLead = await response.json();
       setLeadDetails(updatedLead);
       setEditNoteId(null);
@@ -109,9 +142,12 @@ const LeadDetailsScreen = ({ route, navigation }) => {
 
   const handleDeleteNote = async (noteId) => {
     try {
-      const response = await fetch(`${BASE_URL}/api/lead/one/${leadId}/notes/${noteId}`, {
-        method: 'DELETE',
-      });
+      const response = await fetch(
+        `${BASE_URL}/api/lead/one/${leadId}/notes/${noteId}`,
+        {
+          method: 'DELETE',
+        }
+      );
       const updatedLead = await response.json();
       setLeadDetails(updatedLead);
       if (Array.isArray(updatedLead.notes)) {
@@ -156,14 +192,12 @@ const LeadDetailsScreen = ({ route, navigation }) => {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
-      {/* The Header is still your normal component, no changes needed here, 
-          but we pass handleSearchChange for searching notes. */}
       <CustomHeader
         title="Lead Details"
         onSearchChange={handleSearchChange}
         showBackButton={true}
         navigation={navigation}
-        enableVoice={false} // <-- disables mic in header
+        enableVoice={false}
       />
 
       <ScrollView contentContainerStyle={{ padding: 16 }}>
@@ -175,7 +209,9 @@ const LeadDetailsScreen = ({ route, navigation }) => {
             </Text>
             <Text style={{ color: '#007BFF', marginTop: 4 }}>{leadDetails.email}</Text>
             <Text style={{ marginTop: 4 }}>{leadDetails.phone}</Text>
-            {!!leadDetails.company && <Text style={{ marginTop: 4 }}>{leadDetails.company}</Text>}
+            {!!leadDetails.company && (
+              <Text style={{ marginTop: 4 }}>{leadDetails.company}</Text>
+            )}
             <TouchableOpacity
               style={{
                 borderWidth: 1,
@@ -231,19 +267,41 @@ const LeadDetailsScreen = ({ route, navigation }) => {
               />
             </TouchableOpacity>
           </View>
-          <TouchableOpacity
-            onPress={handleAddNote}
-            style={{
-              backgroundColor: '#007BFF',
-              borderRadius: 4,
-              paddingHorizontal: 16,
-              paddingVertical: 8,
-              marginTop: 8,
-              alignSelf: 'flex-start',
-            }}
-          >
-            <Text style={{ color: '#fff' }}>Save Note</Text>
-          </TouchableOpacity>
+
+          {/* Buttons: Save & Attach Document */}
+          <View style={{ flexDirection: 'row', marginTop: 8 }}>
+            <TouchableOpacity
+              onPress={handleAddNote}
+              style={{
+                backgroundColor: '#007BFF',
+                borderRadius: 4,
+                paddingHorizontal: 16,
+                paddingVertical: 8,
+              }}
+            >
+              <Text style={{ color: '#fff' }}>Save Note</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={handlePickDocument}
+              style={{
+                marginLeft: 8,
+                backgroundColor: '#007BFF',
+                borderRadius: 4,
+                paddingHorizontal: 16,
+                paddingVertical: 8,
+              }}
+            >
+              <Text style={{ color: '#fff' }}>Attach Doc</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Show the attached document name (if any) */}
+          {attachedDocument && (
+            <View style={{ marginTop: 8 }}>
+              <Text>Attached: {attachedDocument.name}</Text>
+            </View>
+          )}
         </View>
 
         {/* Notes List */}
