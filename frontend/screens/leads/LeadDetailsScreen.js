@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,10 +9,10 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import SkeletonLoader from '../../components/SkeletonLoader';
 import { BASE_URL } from '../../constants/constant';
-import { useFocusEffect } from '@react-navigation/native';
 import CustomHeader from '../../components/CustomHeader';
-import Voice from '@react-native-voice/voice';
+import { useVoice } from '../../context/VoiceContext'; // <-- same place you used in header
 
 const LeadDetailsScreen = ({ route, navigation }) => {
   const lead = route.params?.lead;
@@ -24,38 +24,37 @@ const LeadDetailsScreen = ({ route, navigation }) => {
   const [newNote, setNewNote] = useState('');
   const [editNoteId, setEditNoteId] = useState(null);
   const [editNoteText, setEditNoteText] = useState('');
-  const [isRecording, setIsRecording] = useState(false);
+
+  // Voice from context
+  const {
+    isRecording,
+    recognizedText,
+    setRecognizedText,
+    startRecording,
+    stopRecording,
+  } = useVoice();
+
+  // Whenever recognizedText changes, append it to newNote
+  useEffect(() => {
+    if (recognizedText) {
+      setNewNote((prev) =>
+        prev ? `${prev} ${recognizedText}` : recognizedText
+      );
+      // Clear recognized text so we don't keep appending repeatedly
+      setRecognizedText('');
+    }
+  }, [recognizedText]);
 
   useEffect(() => {
     if (leadId) fetchLeadDetails(leadId);
   }, [leadId]);
-
-  useFocusEffect(
-    useCallback(() => {
-      return () => {
-        Voice.destroy().then(Voice.removeAllListeners);
-      };
-    }, [])
-  );
-
-  useEffect(() => {
-    Voice.onSpeechResults = (event) => {
-      if (event.value && event.value.length > 0) {
-        setNewNote((prev) => prev + ' ' + event.value[0]);
-      }
-    };
-    Voice.onSpeechError = (event) => {
-      Alert.alert('Speech Error', event.error?.message || 'Something went wrong');
-      setIsRecording(false);
-    };
-  }, []);
 
   const fetchLeadDetails = async (id) => {
     try {
       const response = await fetch(`${BASE_URL}/api/lead/one/${id}`);
       const data = await response.json();
       setLeadDetails(data);
-      if (data.notes && Array.isArray(data.notes)) setFilteredNotes(data.notes);
+      if (Array.isArray(data.notes)) setFilteredNotes(data.notes);
     } catch (error) {
       console.error('Error fetching lead:', error);
     }
@@ -72,32 +71,14 @@ const LeadDetailsScreen = ({ route, navigation }) => {
       const updatedLead = await response.json();
       setLeadDetails(updatedLead);
       setNewNote('');
-      if (updatedLead.notes && Array.isArray(updatedLead.notes)) {
+      if (Array.isArray(updatedLead.notes)) {
         setFilteredNotes(updatedLead.notes);
-        if (searchText.trim()) filterNotes(searchText, updatedLead.notes);
+        if (searchText.trim()) {
+          filterNotes(searchText, updatedLead.notes);
+        }
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to add note.');
-    }
-  };
-
-  const startRecording = async () => {
-    try {
-      setIsRecording(true);
-      await Voice.start('en-US');
-    } catch (error) {
-      console.error('Voice start error:', error);
-      setIsRecording(false);
-    }
-  };
-
-  const stopRecording = async () => {
-    try {
-      await Voice.stop();
-      setIsRecording(false);
-    } catch (error) {
-      console.error('Voice stop error:', error);
-      setIsRecording(false);
     }
   };
 
@@ -117,7 +98,7 @@ const LeadDetailsScreen = ({ route, navigation }) => {
       setLeadDetails(updatedLead);
       setEditNoteId(null);
       setEditNoteText('');
-      if (updatedLead.notes && Array.isArray(updatedLead.notes)) {
+      if (Array.isArray(updatedLead.notes)) {
         setFilteredNotes(updatedLead.notes);
         if (searchText.trim()) filterNotes(searchText, updatedLead.notes);
       }
@@ -133,7 +114,7 @@ const LeadDetailsScreen = ({ route, navigation }) => {
       });
       const updatedLead = await response.json();
       setLeadDetails(updatedLead);
-      if (updatedLead.notes && Array.isArray(updatedLead.notes)) {
+      if (Array.isArray(updatedLead.notes)) {
         setFilteredNotes(updatedLead.notes);
         if (searchText.trim()) filterNotes(searchText, updatedLead.notes);
       }
@@ -161,19 +142,28 @@ const LeadDetailsScreen = ({ route, navigation }) => {
 
   if (!leadDetails) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <Text>Loading lead details...</Text>
+      <View style={{ flex: 1, padding: 16, backgroundColor: '#fff' }}>
+        <SkeletonLoader width="60%" height={20} />
+        <SkeletonLoader width="40%" height={16} />
+        <SkeletonLoader width="50%" height={16} />
+        <SkeletonLoader width="100%" height={60} borderRadius={8} />
+        <SkeletonLoader width="30%" height={40} />
+        <SkeletonLoader width="100%" height={100} borderRadius={8} />
+        <SkeletonLoader width="100%" height={100} borderRadius={8} />
       </View>
     );
   }
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
+      {/* The Header is still your normal component, no changes needed here, 
+          but we pass handleSearchChange for searching notes. */}
       <CustomHeader
         title="Lead Details"
         onSearchChange={handleSearchChange}
         showBackButton={true}
         navigation={navigation}
+        enableVoice={false} // <-- disables mic in header
       />
 
       <ScrollView contentContainerStyle={{ padding: 16 }}>
@@ -234,7 +224,11 @@ const LeadDetailsScreen = ({ route, navigation }) => {
                 borderRadius: 8,
               }}
             >
-              <Ionicons name={isRecording ? 'mic-off' : 'mic'} size={24} color="#fff" />
+              <Ionicons
+                name={isRecording ? 'mic-off' : 'mic'}
+                size={24}
+                color="#fff"
+              />
             </TouchableOpacity>
           </View>
           <TouchableOpacity
@@ -320,7 +314,11 @@ const LeadDetailsScreen = ({ route, navigation }) => {
                     <View style={{ flexDirection: 'row', marginTop: 8 }}>
                       <TouchableOpacity
                         onPress={() => handleEditNote(note._id, note.text)}
-                        style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          marginRight: 16,
+                        }}
                       >
                         <Ionicons name="create-outline" size={16} color="blue" />
                         <Text style={{ color: 'blue', marginLeft: 4 }}>Edit</Text>

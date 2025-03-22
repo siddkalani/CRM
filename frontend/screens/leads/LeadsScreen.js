@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from '../../constants/constant';
 import { useFocusEffect } from '@react-navigation/native';
 import CustomHeader from '../../components/CustomHeader';
+import SkeletonLoader from '../../components/SkeletonLoader';
 
 const LeadsScreen = ({ navigation }) => {
   const [leads, setLeads] = useState([]);
@@ -75,6 +76,21 @@ const LeadsScreen = ({ navigation }) => {
 
     setFilteredLeads(matchedLeads);
   };
+  if (!leads.length) {
+    return (
+      <View style={{ flex: 1, padding: 16 }}>
+        {[...Array(5)].map((_, idx) => (
+          <View key={idx} style={{ flexDirection: 'row', marginBottom: 16 }}>
+            <SkeletonLoader width={40} height={40} borderRadius={20} />
+            <View style={{ marginLeft: 12, flex: 1 }}>
+              <SkeletonLoader width="80%" height={16} />
+              <SkeletonLoader width="60%" height={14} />
+            </View>
+          </View>
+        ))}
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>

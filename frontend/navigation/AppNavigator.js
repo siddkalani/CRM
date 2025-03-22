@@ -44,7 +44,7 @@ export default function AppNavigator() {
             header: (props) => (
               <CustomHeader
                 {...props}
-                title="Add Screen"
+                title="Add Lead"
                 showBackButton={true} // <-- only set this prop for AddLeadScreen
               />
             ),
@@ -57,7 +57,7 @@ export default function AppNavigator() {
             header: (props) => (
               <CustomHeader
                 {...props}
-                title="Add Screen"
+                title="Add Contact"
                 showBackButton={true} // <-- only set this prop for AddLeadScreen
               />
             ),

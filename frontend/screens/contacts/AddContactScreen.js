@@ -53,7 +53,7 @@ const AddContactScreen = ({ navigation }) => {
   // Add the checkmark icon in the header
   useLayoutEffect(() => {
     navigation.setOptions({
-      title: 'Add Lead',
+      title: 'Add Contact',
       headerRight: () => (
         <Ionicons
           name="checkmark"
@@ -70,10 +70,10 @@ const AddContactScreen = ({ navigation }) => {
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
       <ScrollView style={{ padding: 16 }}>
         {/* Lead Owner Section */}
-        <View style={{ marginBottom: 16 }}>
+        {/* <View style={{ marginBottom: 16 }}>
           <Text style={{ color: '#666' }}>Lead Owner</Text>
           <Text style={{ fontWeight: '600', color: '#000' }}>siddharth kalani</Text>
-        </View>
+        </View> */}
 
         {/* Company */}
         {/* <View style={{ marginBottom: 16 }}>
@@ -111,7 +111,7 @@ const AddContactScreen = ({ navigation }) => {
 
         {/* Last Name */}
         <View style={{ marginBottom: 16 }}>
-          <Text style={{ color: 'red' }}>* Last Name</Text>
+          <Text>Last Name</Text>
           <TextInput
             style={{
               borderWidth: 1,

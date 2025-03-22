@@ -11,32 +11,38 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { BASE_URL } from '../../constants/constant';
 import { useFocusEffect } from '@react-navigation/native';
-import CustomHeader from '../../components/CustomHeader'; // <-- Import your custom header
+import CustomHeader from '../../components/CustomHeader';
+import { useVoice } from '../../context/VoiceContext'; // <-- Voice Context
+import SkeletonLoader from '../../components/SkeletonLoader';
 
 const ContactDetailsScreen = ({ route, navigation }) => {
-  // Extract the contact object from navigation params
   const contactParam = route.params?.contact;
-  // The contact's MongoDB _id
   const contactId = contactParam?._id;
-  // Local state to store the “fresh” contact details from server
-  const [contactDetails, setContactDetails] = useState(contactParam || null);
 
-  // -------------------
-  // SEARCH FOR NOTES
-  // -------------------
+  const [contactDetails, setContactDetails] = useState(contactParam || null);
   const [searchText, setSearchText] = useState('');
   const [filteredNotes, setFilteredNotes] = useState([]);
-
-  // State for new note creation
   const [newNote, setNewNote] = useState('');
-
-  // Editing note states
   const [editNoteId, setEditNoteId] = useState(null);
   const [editNoteText, setEditNoteText] = useState('');
 
-  // -------------------------------------------
-  // (A) FETCH / REFRESH THE SINGLE CONTACT
-  // -------------------------------------------
+  // Voice input
+  const {
+    isRecording,
+    recognizedText,
+    setRecognizedText,
+    startRecording,
+    stopRecording,
+  } = useVoice();
+
+  // Append recognized voice text to newNote
+  useEffect(() => {
+    if (recognizedText) {
+      setNewNote((prev) => (prev ? `${prev} ${recognizedText}` : recognizedText));
+      setRecognizedText('');
+    }
+  }, [recognizedText]);
+
   const fetchContactDetails = async (id) => {
     try {
       const response = await fetch(`${BASE_URL}/api/contacts/one/${id}`, {
@@ -44,13 +50,9 @@ const ContactDetailsScreen = ({ route, navigation }) => {
           'Cache-Control': 'no-cache',
         },
       });
-      if (!response.ok) {
-        throw new Error('Failed to fetch contact details');
-      }
+      if (!response.ok) throw new Error('Failed to fetch contact details');
       const data = await response.json();
       setContactDetails(data);
-
-      // Initialize filteredNotes once we have the data
       if (data.notes && Array.isArray(data.notes)) {
         setFilteredNotes(data.notes);
       }
@@ -59,30 +61,19 @@ const ContactDetailsScreen = ({ route, navigation }) => {
     }
   };
 
-  // (B) EFFECT: On mount (and when contactId changes), fetch the contact
   useEffect(() => {
-    if (contactId) {
-      fetchContactDetails(contactId);
-    }
+    if (contactId) fetchContactDetails(contactId);
   }, [contactId]);
 
-  // (C) OPTIONAL POLLING via useFocusEffect
   useFocusEffect(
     useCallback(() => {
       let intervalId;
-      if (contactId) {
-        // Example: poll every 30 seconds
-        // intervalId = setInterval(() => fetchContactDetails(contactId), 30000);
-      }
       return () => {
         if (intervalId) clearInterval(intervalId);
       };
     }, [contactId])
   );
 
-  // -------------------------------------------
-  // (D) NOTES: CREATE, EDIT, DELETE
-  // -------------------------------------------
   const handleAddNote = async () => {
     if (!newNote.trim()) return;
     try {
@@ -91,17 +82,12 @@ const ContactDetailsScreen = ({ route, navigation }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: newNote.trim() }),
       });
-      if (!response.ok) {
-        throw new Error('Failed to add note');
-      }
+      if (!response.ok) throw new Error('Failed to add note');
       const updatedContact = await response.json();
       setContactDetails(updatedContact);
       setNewNote('');
-
-      // Also refresh filteredNotes
       if (updatedContact.notes && Array.isArray(updatedContact.notes)) {
         setFilteredNotes(updatedContact.notes);
-        // Re-apply search if user is currently searching
         if (searchText.trim()) {
           filterNotes(searchText, updatedContact.notes);
         }
@@ -127,17 +113,11 @@ const ContactDetailsScreen = ({ route, navigation }) => {
           body: JSON.stringify({ text: editNoteText }),
         }
       );
-      if (!response.ok) {
-        throw new Error('Failed to update note');
-      }
+      if (!response.ok) throw new Error('Failed to update note');
       const updatedContact = await response.json();
       setContactDetails(updatedContact);
-
-      // Reset editing
       setEditNoteId(null);
       setEditNoteText('');
-
-      // Refresh filteredNotes
       if (updatedContact.notes && Array.isArray(updatedContact.notes)) {
         setFilteredNotes(updatedContact.notes);
         if (searchText.trim()) {
@@ -154,17 +134,11 @@ const ContactDetailsScreen = ({ route, navigation }) => {
     try {
       const response = await fetch(
         `${BASE_URL}/api/contacts/one/${contactId}/notes/${noteId}`,
-        {
-          method: 'DELETE',
-        }
+        { method: 'DELETE' }
       );
-      if (!response.ok) {
-        throw new Error('Failed to delete note');
-      }
+      if (!response.ok) throw new Error('Failed to delete note');
       const updatedContact = await response.json();
       setContactDetails(updatedContact);
-
-      // Refresh filteredNotes
       if (updatedContact.notes && Array.isArray(updatedContact.notes)) {
         setFilteredNotes(updatedContact.notes);
         if (searchText.trim()) {
@@ -177,9 +151,6 @@ const ContactDetailsScreen = ({ route, navigation }) => {
     }
   };
 
-  // -------------------------------------------
-  // (E) SEARCH HANDLERS
-  // -------------------------------------------
   const handleSearchChange = (text) => {
     setSearchText(text);
     filterNotes(text, contactDetails.notes || []);
@@ -197,27 +168,29 @@ const ContactDetailsScreen = ({ route, navigation }) => {
     setFilteredNotes(matched);
   };
 
-  // -------------------------------------------
-  // (F) RENDER
-  // -------------------------------------------
   if (!contactDetails) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>Loading contact details...</Text>
+      <View style={{ flex: 1, padding: 16, backgroundColor: '#fff' }}>
+        <SkeletonLoader width="60%" height={20} />
+        <SkeletonLoader width="40%" height={16} />
+        <SkeletonLoader width="50%" height={16} />
+        <SkeletonLoader width="100%" height={60} borderRadius={8} />
+        <SkeletonLoader width="30%" height={40} />
+        <SkeletonLoader width="100%" height={100} borderRadius={8} />
+        <SkeletonLoader width="100%" height={100} borderRadius={8} />
       </View>
     );
   }
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
-
-      {/* Custom Header with search */}
       <CustomHeader
         navigation={navigation}
         title="Contact Details"
         showBackButton={true}
         showSearchButton={true}
         onSearchChange={handleSearchChange}
+        enableVoice={false} // Disable voice in header, since we're using it in notes
       />
 
       <ScrollView contentContainerStyle={{ padding: 16 }}>
@@ -256,20 +229,38 @@ const ContactDetailsScreen = ({ route, navigation }) => {
         {/* Add New Note */}
         <View style={{ borderTopWidth: 1, borderTopColor: '#ccc', paddingTop: 12 }}>
           <Text style={{ fontWeight: '600', marginBottom: 8 }}>Add a New Note</Text>
-          <TextInput
-            style={{
-              borderWidth: 1,
-              borderColor: '#ccc',
-              borderRadius: 4,
-              padding: 8,
-              minHeight: 60,
-              textAlignVertical: 'top',
-            }}
-            placeholder="Type your new note here..."
-            multiline
-            value={newNote}
-            onChangeText={setNewNote}
-          />
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <TextInput
+              style={{
+                borderWidth: 1,
+                borderColor: '#ccc',
+                borderRadius: 4,
+                padding: 8,
+                minHeight: 60,
+                flex: 1,
+                textAlignVertical: 'top',
+              }}
+              placeholder="Type your new note here..."
+              multiline
+              value={newNote}
+              onChangeText={setNewNote}
+            />
+            <TouchableOpacity
+              onPress={isRecording ? stopRecording : startRecording}
+              style={{
+                marginLeft: 8,
+                backgroundColor: isRecording ? 'red' : '#007BFF',
+                padding: 10,
+                borderRadius: 8,
+              }}
+            >
+              <Ionicons
+                name={isRecording ? 'mic-off' : 'mic'}
+                size={24}
+                color="#fff"
+              />
+            </TouchableOpacity>
+          </View>
           <TouchableOpacity
             onPress={handleAddNote}
             style={{
@@ -285,11 +276,11 @@ const ContactDetailsScreen = ({ route, navigation }) => {
           </TouchableOpacity>
         </View>
 
-        {/* Filtered Notes */}
+        {/* Notes */}
         <View style={{ marginTop: 16 }}>
           <Text style={{ fontWeight: '600', fontSize: 16 }}>Notes</Text>
           {Array.isArray(filteredNotes) && filteredNotes.length > 0 ? (
-            filteredNotes.map((note) => (
+            [...filteredNotes].reverse().map((note) => (
               <View
                 key={note._id}
                 style={{
@@ -380,7 +371,7 @@ const ContactDetailsScreen = ({ route, navigation }) => {
         </View>
       </ScrollView>
 
-      {/* Bottom Navigation */}
+      {/* Bottom Icons */}
       <View
         style={{
           flexDirection: 'row',
