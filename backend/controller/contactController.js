@@ -11,11 +11,6 @@ const addContact = asyncHandler(async (req, res) => {
   const { userId } = req.params;
   const { firstName, lastName, email, phone, notes } = req.body;
 
-  if (!firstName || !lastName || !phone) {
-    res.status(400);
-    throw new Error('First Name, Last Name, and Phone are required.');
-  }
-
   const newContact = await Contact.create({
     firstName,
     lastName,
