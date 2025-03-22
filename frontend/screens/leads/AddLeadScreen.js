@@ -69,11 +69,6 @@ const AddLeadScreen = ({ navigation }) => {
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
       <ScrollView style={{ padding: 16 }}>
-        {/* Lead Owner Section */}
-        <View style={{ marginBottom: 16 }}>
-          <Text style={{ color: '#666' }}>Lead Owner</Text>
-          <Text style={{ fontWeight: '600', color: '#000' }}>siddharth kalani</Text>
-        </View>
 
         {/* Company */}
         <View style={{ marginBottom: 16 }}>
