@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Lead = require('../models/leadModel');
-const upload = require('../config/s3Config');
+const {upload, s3Client} = require('../config/s3Config');
 const {
   getLeads,
   addLead,
