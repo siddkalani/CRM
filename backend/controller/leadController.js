@@ -112,12 +112,17 @@ const deleteLead = asyncHandler(async (req, res) => {
 
 
 const uploadLeadNote = asyncHandler(async (req, res) => {
+  console.log('Request body:', req.body);
+  console.log('Request file:', req.file);
+  console.log('Request files:', req.files);
+  
   try {
-    const { leadId } = req.params; // Get leadId from params
-    const { text } = req.body; // Get optional text from request body
+    const { leadId } = req.params;
+    const { text } = req.body;
 
-    // Ensure at least one of text or file is provided
+    // Enhanced error handling for file/text validation
     if (!text && !req.file) {
+      console.log('No text or file provided in request.');
       return res.status(400).json({ message: 'No text or file provided.' });
     }
 
@@ -146,7 +151,8 @@ const uploadLeadNote = asyncHandler(async (req, res) => {
     if (req.file) {
       note.fileUrl = req.file.location; // File URL from S3
       note.fileName = req.file.originalname; // Original file name
-      note.fileType = req.file.mimetype; // MIME type (e.g., image/png, application/pdf)
+      note.fileType = req.file.mimetype; // MIME type
+      note.fileSize = req.file.size; // File size
     }
 
     // Push the note to the notes array
@@ -166,6 +172,7 @@ const uploadLeadNote = asyncHandler(async (req, res) => {
     res.status(500).json({ message: 'Failed to add note.', error: error.message });
   }
 });
+
 
 
 

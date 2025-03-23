@@ -42,4 +42,19 @@ const errorHandler = (err , req , res, next) =>{
     }
 }
 
-module.exports= (errorHandler)
+const handleMulterError = (err, req, res, next) => {
+    if (err instanceof multer.MulterError) {
+      // A Multer error occurred when uploading
+      console.error('Multer error:', err);
+      return res.status(400).json({ message: `Upload error: ${err.message}` });
+    } else if (err) {
+      // An unknown error occurred
+      console.error('Unknown upload error:', err);
+      return res.status(500).json({ message: `Upload failed: ${err.message}` });
+    }
+    
+    // No error occurred, continue
+    next();
+  };
+
+module.exports= (errorHandler,handleMulterError)
