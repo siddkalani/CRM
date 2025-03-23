@@ -106,7 +106,7 @@ const deleteLead = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error('Lead not found or not authorized.');
   }
-  await lead.remove();
+  await lead.deleteOne();
   res.status(200).json({ message: 'Lead deleted successfully.' });
 });
 

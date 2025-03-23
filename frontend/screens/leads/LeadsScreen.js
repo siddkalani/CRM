@@ -7,6 +7,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import CustomHeader from '../../components/CustomHeader';
 import SkeletonLoader from '../../components/SkeletonLoader';
 import { StatusBar } from 'expo-status-bar';
+import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler';
 
 const LeadsScreen = ({ navigation }) => {
   const [leads, setLeads] = useState([]);
@@ -53,6 +54,46 @@ const LeadsScreen = ({ navigation }) => {
       fetchLeads();
     }, [])
   );
+
+  const deleteLead = async (leadId) => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/lead/${leadId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete lead');
+      }
+
+      // Remove lead from state
+      const updatedLeads = leads.filter(lead => lead._id !== leadId);
+      setLeads(updatedLeads);
+      setFilteredLeads(filteredLeads.filter(lead => lead._id !== leadId));
+      
+      Alert.alert('Success', 'Lead deleted successfully');
+    } catch (error) {
+      Alert.alert('Error', error.message || 'An error occurred while deleting the lead');
+      console.error(error);
+    }
+  };
+
+  const confirmDeleteLead = (lead) => {
+    Alert.alert(
+      'Delete Lead',
+      `Are you sure you want to delete ${lead.firstName} ${lead.lastName}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete', 
+          onPress: () => deleteLead(lead._id),
+          style: 'destructive'
+        }
+      ],
+      { cancelable: true }
+    );
+  };
 
   const handleSearchChange = (text) => {
     setSearchText(text);
@@ -102,8 +143,69 @@ const LeadsScreen = ({ navigation }) => {
     );
   };
 
+  const renderRightActions = (lead) => {
+    return (
+      <TouchableOpacity
+        className="bg-red-500 w-20 justify-center items-center"
+        onPress={() => confirmDeleteLead(lead)}
+      >
+        <Ionicons name="trash-outline" size={24} color="white" />
+        <Text className="text-white text-xs mt-1">Delete</Text>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderItem = ({ item }) => (
+    <Swipeable
+      renderRightActions={() => renderRightActions(item)}
+      friction={2}
+      rightThreshold={40}
+    >
+      <TouchableOpacity
+        onPress={() => navigation.navigate('LeadDetailsScreen', { lead: item })}
+        className="p-4 border-b border-gray-100 bg-white"
+      >
+        <View className="flex-row items-center">
+          {/* Avatar with initials */}
+          <View className="w-14 h-14 rounded-full bg-blue-100 items-center justify-center mr-3">
+            <Text className="text-blue-600 font-bold text-xl">
+              {`${item.firstName?.[0] || ''}${item.lastName?.[0] || ''}`}
+            </Text>
+          </View>
+
+          {/* Lead info */}
+          <View className="flex-1">
+            <Text className="font-semibold text-gray-800">
+              {item.firstName} {item.lastName}
+            </Text>
+            <Text className="text-gray-500 text-sm">
+              {item.email || 'No email provided'}
+            </Text>
+            {item.phone && (
+              <Text className="text-gray-500 text-sm">{item.phone}</Text>
+            )}
+          </View>
+
+          <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+        </View>
+
+        {/* Display matched notes if searching */}
+        {item.matchedNotes && item.matchedNotes.length > 0 && (
+          <View className="mt-2 ml-12 pl-2 border-l-2 border-blue-200">
+            {item.matchedNotes.map((note) => (
+              <Text key={note._id} className="text-gray-600 text-sm my-1">
+                {note.text}
+              </Text>
+            ))}
+          </View>
+        )}
+      </TouchableOpacity>
+    </Swipeable>
+  );
+
   if (isLoading) {
     return (
+      <GestureHandlerRootView style={{ flex: 1 }}>
       <View className="flex-1 bg-white">
         {/* Skeleton Header */}
         <View className="bg-blue-600 pt-10">
@@ -134,95 +236,54 @@ const LeadsScreen = ({ navigation }) => {
           ))}
         </View>
       </View>
+      </GestureHandlerRootView>
     );
   }
 
   return (
-    <View className="flex-1 bg-white">
-      <StatusBar style="light" />
-      
-      {/* Custom Header with Search */}
-      <CustomHeader
-        navigation={navigation}
-        title="Leads"
-        onSearchChange={handleSearchChange}
-        containerClassName="bg-blue-600"
-        titleClassName="text-white font-bold text-lg"
-        searchPlaceholder="Search leads..."
-      />
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <View className="flex-1 bg-white">
+        <StatusBar style="light" />
+        
+        {/* Custom Header with Search */}
+        <CustomHeader
+          navigation={navigation}
+          title="Leads"
+          onSearchChange={handleSearchChange}
+          containerClassName="bg-blue-600"
+          titleClassName="text-white font-bold text-lg"
+          searchPlaceholder="Search leads..."
+        />
 
-      {/* Filter Bar */}
-      <View className="flex-row items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-50">
-        <Text className="font-bold text-blue-600">All Leads</Text>
-        <View className="flex-row">
-          {/* <TouchableOpacity className="ml-2 p-1">
-            <Ionicons name="filter-outline" size={20} color="#4B5563" />
-          </TouchableOpacity> */}
-          <TouchableOpacity className="ml-2 p-1" onPress={fetchLeads}>
-            <Ionicons name="refresh-outline" size={20} color="#4B5563" />
+        {/* Filter Bar */}
+        <View className="flex-row items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-50">
+          <Text className="font-bold text-blue-600">All Leads</Text>
+          <View className="flex-row">
+            <TouchableOpacity className="ml-2 p-1" onPress={fetchLeads}>
+              <Ionicons name="refresh-outline" size={20} color="#4B5563" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Leads List */}
+        <FlatList
+          data={filteredLeads}
+          keyExtractor={(item) => item._id?.toString()}
+          ListEmptyComponent={renderEmptyState}
+          renderItem={renderItem}
+        />
+
+        {/* Floating Action Button */}
+        <View className="absolute bottom-10 right-5">
+          <TouchableOpacity
+            className="bg-blue-600 w-14 h-14 rounded-full items-center justify-center shadow-lg"
+            onPress={() => navigation.navigate('AddLeadScreen')}
+          >
+            <Ionicons name="add" size={28} color="#fff" />
           </TouchableOpacity>
         </View>
       </View>
-
-      {/* Leads List */}
-      <FlatList
-  data={filteredLeads}
-  keyExtractor={(item) => item._id?.toString()}
-  ListEmptyComponent={renderEmptyState}
-  renderItem={({ item }) => (
-    <TouchableOpacity
-      onPress={() => navigation.navigate('LeadDetailsScreen', { lead: item })}
-      className="p-4 border-b border-gray-100 active:bg-gray-50"
-    >
-      <View className="flex-row items-center">
-        {/* Avatar with initials */}
-        <View className="w-14 h-14 rounded-full bg-blue-100 items-center justify-center mr-3">
-          <Text className="text-blue-600 font-bold text-xl">
-            {`${item.firstName?.[0] || ''}${item.lastName?.[0] || ''}`}
-          </Text>
-        </View>
-
-        {/* Lead info */}
-        <View className="flex-1">
-          <Text className="font-semibold text-gray-800">
-            {item.firstName} {item.lastName}
-          </Text>
-          <Text className="text-gray-500 text-sm">
-            {item.email || 'No email provided'}
-          </Text>
-          {item.phone && (
-            <Text className="text-gray-500 text-sm">{item.phone}</Text>
-          )}
-        </View>
-
-        <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
-      </View>
-
-      {/* Display matched notes if searching */}
-      {item.matchedNotes && item.matchedNotes.length > 0 && (
-        <View className="mt-2 ml-12 pl-2 border-l-2 border-blue-200">
-          {item.matchedNotes.map((note) => (
-            <Text key={note._id} className="text-gray-600 text-sm my-1">
-              {note.text}
-            </Text>
-          ))}
-        </View>
-      )}
-    </TouchableOpacity>
-  )}
-/>
-
-
-      {/* Floating Action Button */}
-      <View className="absolute bottom-10 right-5">
-        <TouchableOpacity
-          className="bg-blue-600 w-14 h-14 rounded-full items-center justify-center shadow-lg"
-          onPress={() => navigation.navigate('AddLeadScreen')}
-        >
-          <Ionicons name="add" size={28} color="#fff" />
-        </TouchableOpacity>
-      </View>
-    </View>
+    </GestureHandlerRootView>
   );
 };
 

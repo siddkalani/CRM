@@ -72,7 +72,7 @@ const AddLeadScreen = ({ navigation }) => {
 
         {/* Company */}
         <View style={{ marginBottom: 16 }}>
-          <Text style={{ color: 'red' }}>* Company</Text>
+          <Text>Company</Text>
           <TextInput
             style={{
               borderWidth: 1,
@@ -89,7 +89,7 @@ const AddLeadScreen = ({ navigation }) => {
 
         {/* First Name */}
         <View style={{ marginBottom: 16 }}>
-          <Text style={{ color: '#666' }}>First Name</Text>
+          <Text style={{ color: 'red' }}>* First Name</Text>
           <TextInput
             style={{
               borderWidth: 1,
@@ -106,7 +106,7 @@ const AddLeadScreen = ({ navigation }) => {
 
         {/* Last Name */}
         <View style={{ marginBottom: 16 }}>
-          <Text style={{ color: 'red' }}>* Last Name</Text>
+          <Text style={{ color: '#666' }}>Last Name</Text>
           <TextInput
             style={{
               borderWidth: 1,
@@ -123,7 +123,7 @@ const AddLeadScreen = ({ navigation }) => {
 
         {/* Email */}
         <View style={{ marginBottom: 16 }}>
-          <Text style={{ color: '#666' }}>Email</Text>
+          <Text style={{ color: 'red' }}>* Email</Text>
           <TextInput
             style={{
               borderWidth: 1,

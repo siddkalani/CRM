@@ -94,7 +94,7 @@ const AddContactScreen = ({ navigation }) => {
 
         {/* First Name */}
         <View style={{ marginBottom: 16 }}>
-          <Text style={{ color: '#666' }}>First Name</Text>
+          <Text style={{ color: 'red' }}>* First Name</Text>
           <TextInput
             style={{
               borderWidth: 1,
@@ -128,7 +128,7 @@ const AddContactScreen = ({ navigation }) => {
 
         {/* Email */}
         <View style={{ marginBottom: 16 }}>
-          <Text style={{ color: '#666' }}>Email</Text>
+          <Text style={{ color: 'red' }}>* Email</Text>
           <TextInput
             style={{
               borderWidth: 1,

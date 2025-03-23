@@ -75,22 +75,29 @@ const ProfileScreen = () => {
     fetchCurrentUser();
   }, []);
 
+  // Both password fields are now required, each 6+ chars, and must match
   const validateForm = () => {
     if (!username.trim()) {
       Alert.alert('Validation Error', 'Username is required.');
       return false;
     }
-    
-    if (password && password.length < 6) {
+
+    // Now always require password + confirm password
+    if (!password.trim() || !confirmPassword.trim()) {
+      Alert.alert('Validation Error', 'Both password and confirm password are required.');
+      return false;
+    }
+
+    if (password.length < 6 || confirmPassword.length < 6) {
       Alert.alert('Validation Error', 'Password must be at least 6 characters.');
       return false;
     }
-    
-    if (password && password !== confirmPassword) {
+
+    if (password !== confirmPassword) {
       Alert.alert('Validation Error', 'Passwords do not match.');
       return false;
     }
-    
+
     return true;
   };
 
@@ -98,7 +105,6 @@ const ProfileScreen = () => {
     if (!validateForm()) return;
     
     setIsSaving(true);
-    
     try {
       const token = await AsyncStorage.getItem('token');
       if (!token) {
@@ -106,11 +112,8 @@ const ProfileScreen = () => {
         return;
       }
 
-      // Only include password in the request if it has been changed
-      const payload = { username };
-      if (password) {
-        payload.password = password;
-      }
+      // Always include password in the request now
+      const payload = { username, password };
 
       const response = await fetch(`${BASE_URL}/api/users/update`, {
         method: 'PUT',
@@ -257,7 +260,7 @@ const ProfileScreen = () => {
                 <Ionicons name="lock-closed-outline" size={18} color="#6B7280" />
                 <TextInput
                   className="flex-1 ml-2 text-gray-800 py-2"
-                  placeholder="Enter new password (optional)"
+                  placeholder="Enter new password"
                   secureTextEntry={!showPassword}
                   value={password}
                   onChangeText={setPassword}
