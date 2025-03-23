@@ -1,5 +1,6 @@
 const asyncHandler = require('express-async-handler');
 const Contact = require('../models/contactModel');
+const File = require('../models/fileModel');
 
 const getContacts = asyncHandler(async (req, res) => {
   const { userId } = req.params;
@@ -55,16 +56,34 @@ const deleteContact = asyncHandler(async (req, res) => {
 });
 
 const uploadContactFile = asyncHandler(async (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ message: 'No file uploaded.' });
-  }
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded.' });
+    }
 
-  const fileUrl = req.file.location; // File URL from S3
-  res.status(200).json({
-    message: 'File uploaded successfully.',
-    fileUrl,
-  });
+    const fileUrl = req.file.location; // S3 file URL
+    const fileName = req.file.originalname; // Original file name
+    const fileType = req.file.mimetype; // File type (e.g., image/png, application/pdf)
+
+    // Save file metadata to the database
+    const newFile = new File({
+      name: fileName,
+      url: fileUrl,
+      fileType,
+    });
+
+    await newFile.save();
+
+    res.status(200).json({
+      message: 'File uploaded successfully.',
+      fileUrl,
+    });
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    res.status(500).json({ message: 'File upload failed.', error: error.message });
+  }
 });
+
 
 module.exports = {
   getContacts,
