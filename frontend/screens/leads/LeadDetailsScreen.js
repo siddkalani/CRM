@@ -503,6 +503,7 @@ const LeadDetailsScreen = ({ route, navigation }) => {
 
  // Document Picker and Form Data handling
 
+// Document Picker handler - already working correctly based on logs
 const handlePickDocument = async () => {
   try {
     const result = await DocumentPicker.getDocumentAsync({
@@ -552,6 +553,7 @@ const getMimeType = (uri) => {
   return mimeTypes[extension] || 'application/octet-stream';
 };
 
+// Fixed handleAddNote without setIsSubmitting dependency
 const handleAddNote = async () => {
   if (!newNote.trim() && !attachedDocument) {
     console.log("No note text or attachment provided");
@@ -559,8 +561,6 @@ const handleAddNote = async () => {
   }
 
   try {
-    setIsSubmitting(true); // Add a loading state if you haven't already
-
     // Create FormData object
     const formData = new FormData();
     
@@ -573,18 +573,18 @@ const handleAddNote = async () => {
     if (attachedDocument) {
       console.log("📤 Attaching document to FormData:", JSON.stringify(attachedDocument, null, 2));
       
-      // Append the file with the correct field name 'file'
-      formData.append('file', {
+      // For Android, we need to create a proper file object for FormData
+      const fileObject = {
         uri: attachedDocument.uri,
         type: attachedDocument.type,
         name: attachedDocument.name
-      });
+      };
+      
+      console.log("📄 File object for upload:", JSON.stringify(fileObject, null, 2));
+      formData.append('file', fileObject);
 
-      // Log the structure of formData (limited visibility in RN)
-      console.log("FormData entries:");
-      for (let pair of Object.entries(formData)) {
-        console.log(pair[0], pair[1]);
-      }
+      // Log what we can about FormData (limited in React Native)
+      console.log("FormData has file attached:", !!attachedDocument);
     }
     
     // Send request with FormData
@@ -596,21 +596,19 @@ const handleAddNote = async () => {
       body: formData,
       headers: {
         'Accept': 'application/json',
-        // Do NOT set 'Content-Type': 'multipart/form-data' manually
       }
     });
     
-    // Log the entire response for debugging
+    // Get the response as text first for debugging
     const responseText = await response.text();
     console.log(`📥 Response status: ${response.status}`);
-    console.log(`📥 Response headers:`, response.headers);
     console.log(`📥 Response body:`, responseText);
     
     if (!response.ok) {
       throw new Error(`Server responded with ${response.status}: ${responseText}`);
     }
     
-    // Parse the JSON response only if it's valid JSON
+    // Parse the JSON response
     let responseData;
     try {
       responseData = JSON.parse(responseText);
@@ -638,8 +636,6 @@ const handleAddNote = async () => {
   } catch (error) {
     console.error("❌ Error adding note:", error);
     Alert.alert("Error", "Failed to add note: " + error.message);
-  } finally {
-    setIsSubmitting(false);
   }
 };
   
