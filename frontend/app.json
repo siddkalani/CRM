@@ -4,11 +4,11 @@
     "slug": "frontend",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/exploration.png",
+    "icon": "./assets/Datamate.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": false,
     "splash": {
-      "image": "./assets/exploration.png",
+      "image": "./assets/Datamate.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -18,7 +18,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/exploration.png",
+        "foregroundImage": "./assets/Datamate.png",
         "backgroundColor": "#ffffff"
       },
       "permissions": [
@@ -27,7 +27,7 @@
       "package": "com.siddharth2709.datamate"
     },
     "web": {
-      "favicon": "./assets/exploration.png",
+      "favicon": "./assets/Datamate.png",
       "bundler": "metro"
     },
     "plugins": [

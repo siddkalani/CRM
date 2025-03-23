@@ -6,17 +6,21 @@ import { BASE_URL } from '../../constants/constant';
 import { useFocusEffect } from '@react-navigation/native';
 import CustomHeader from '../../components/CustomHeader';
 import SkeletonLoader from '../../components/SkeletonLoader';
+import { StatusBar } from 'expo-status-bar';
 
 const LeadsScreen = ({ navigation }) => {
   const [leads, setLeads] = useState([]);
   const [filteredLeads, setFilteredLeads] = useState([]);
   const [searchText, setSearchText] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchLeads = async () => {
+    setIsLoading(true);
     try {
       const userId = await AsyncStorage.getItem('userId');
       if (!userId) {
         Alert.alert('Error', 'User not logged in');
+        setIsLoading(false);
         return;
       }
 
@@ -28,6 +32,7 @@ const LeadsScreen = ({ navigation }) => {
       if (!response.ok) {
         const errorData = await response.json();
         Alert.alert('Error', errorData.message || 'Failed to fetch leads.');
+        setIsLoading(false);
         return;
       }
 
@@ -38,6 +43,8 @@ const LeadsScreen = ({ navigation }) => {
     } catch (error) {
       Alert.alert('Error', 'An error occurred while fetching leads.');
       console.error(error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -76,84 +83,120 @@ const LeadsScreen = ({ navigation }) => {
 
     setFilteredLeads(matchedLeads);
   };
-  if (!leads.length) {
+
+  const renderEmptyState = () => {
     return (
-      <View style={{ flex: 1, padding: 16 }}>
-        {[...Array(5)].map((_, idx) => (
-          <View key={idx} style={{ flexDirection: 'row', marginBottom: 16 }}>
-            <SkeletonLoader width={40} height={40} borderRadius={20} />
-            <View style={{ marginLeft: 12, flex: 1 }}>
-              <SkeletonLoader width="80%" height={16} />
-              <SkeletonLoader width="60%" height={14} />
-            </View>
+      <View className="flex-1 items-center justify-center p-6 bg-gray-50">
+        <Ionicons name="people-outline" size={64} color="#CBD5E1" />
+        <Text className="text-xl font-semibold text-gray-700 mt-4">No leads found</Text>
+        <Text className="text-gray-500 text-center mt-2">
+          Add your first lead by tapping the + button below
+        </Text>
+        <TouchableOpacity
+          className="mt-6 bg-blue-500 px-6 py-3 rounded-full"
+          onPress={() => navigation.navigate('AddLeadScreen')}
+        >
+          <Text className="text-white font-medium">Add Lead</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 bg-white">
+        {/* Skeleton Header */}
+        <View className="bg-blue-600 pt-10">
+          <View className="flex-row items-center h-14 px-4">
+            <SkeletonLoader width={24} height={24} borderRadius={4} style={{ marginRight: 10 }} />
+            <SkeletonLoader width={100} height={16} borderRadius={4} />
+            <View className="flex-1" />
+            <SkeletonLoader width={24} height={24} borderRadius={4} />
           </View>
-        ))}
+        </View>
+  
+        {/* Skeleton Filter Bar */}
+        <View className="px-4 py-3 border-b border-gray-200">
+          <SkeletonLoader width={80} height={16} borderRadius={4} />
+        </View>
+        
+        {/* Skeleton List Items */}
+        <View className="flex-1 p-4">
+          {[...Array(5)].map((_, idx) => (
+            <View key={idx} className="flex-row items-center mb-4 p-2">
+              <SkeletonLoader width={40} height={40} borderRadius={20} />
+              <View className="ml-3 flex-1">
+                <SkeletonLoader width="80%" height={16} borderRadius={4} />
+                <View className="h-2" />
+                <SkeletonLoader width="60%" height={14} borderRadius={4} />
+              </View>
+            </View>
+          ))}
+        </View>
       </View>
     );
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#fff' }}>
+    <View className="flex-1 bg-white">
+      <StatusBar style="light" />
+      
       {/* Custom Header with Search */}
       <CustomHeader
         navigation={navigation}
         title="Leads"
         onSearchChange={handleSearchChange}
+        containerClassName="bg-blue-600"
+        titleClassName="text-white font-bold text-lg"
+        searchPlaceholder="Search leads..."
       />
 
-      {/* Filter Bar (exactly as in ContactScreen) */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingHorizontal: 16,
-          paddingVertical: 12,
-          borderBottomWidth: 1,
-          borderBottomColor: '#ccc',
-        }}
-      >
-        <Text style={{ fontWeight: 'bold', color: '#007BFF' }}>
-          All Leads
-        </Text>
-        <TouchableOpacity>
-          <Ionicons name="filter-circle-outline" size={24} color="gray" />
-        </TouchableOpacity>
+      {/* Filter Bar */}
+      <View className="flex-row items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-50">
+        <Text className="font-bold text-blue-600">All Leads</Text>
+        <View className="flex-row">
+          <TouchableOpacity className="ml-2 p-1">
+            <Ionicons name="filter-outline" size={20} color="#4B5563" />
+          </TouchableOpacity>
+          <TouchableOpacity className="ml-2 p-1" onPress={fetchLeads}>
+            <Ionicons name="refresh-outline" size={20} color="#4B5563" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Leads List */}
       <FlatList
         data={filteredLeads}
         keyExtractor={(item) => item._id?.toString()}
+        ListEmptyComponent={renderEmptyState}
         renderItem={({ item }) => (
           <TouchableOpacity
             onPress={() => navigation.navigate('LeadDetailsScreen', { lead: item })}
-            style={{
-              padding: 16,
-              borderBottomWidth: 1,
-              borderBottomColor: '#eee',
-            }}
+            className="p-4 border-b border-gray-100 active:bg-gray-50"
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Ionicons
-                name="person-circle"
-                size={40}
-                color="#999"
-                style={{ marginRight: 12 }}
-              />
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontWeight: '600', color: '#000' }}>
+            <View className="flex-row items-center">
+              <View className="w-10 h-10 rounded-full bg-blue-100 items-center justify-center mr-3">
+                <Text className="text-blue-600 font-bold text-lg">
+                  {`${item.firstName?.[0] || ''}${item.lastName?.[0] || ''}`}
+                </Text>
+              </View>
+              <View className="flex-1">
+                <Text className="font-semibold text-gray-800">
                   {item.firstName} {item.lastName}
                 </Text>
-                <Text style={{ color: '#666' }}>{item.email}</Text>
+                <Text className="text-gray-500 text-sm">{item.email || 'No email provided'}</Text>
+                {item.phone && (
+                  <Text className="text-gray-500 text-sm">{item.phone}</Text>
+                )}
               </View>
+              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
             </View>
 
             {item.matchedNotes && item.matchedNotes.length > 0 && (
-              <View style={{ marginTop: 6, marginLeft: 52 }}>
+              <View className="mt-2 ml-12 pl-2 border-l-2 border-blue-200">
                 {item.matchedNotes.map((note) => (
-                  <Text key={note._id} style={{ color: '#555', fontSize: 14 }}>
-                    • {note.text}
+                  <Text key={note._id} className="text-gray-600 text-sm my-1">
+                    {note.text}
                   </Text>
                 ))}
               </View>
@@ -162,21 +205,10 @@ const LeadsScreen = ({ navigation }) => {
         )}
       />
 
-      {/* Floating Action Button (exactly as in ContactScreen) */}
-      <View style={{ position: 'absolute', bottom: 40, right: 20 }}>
+      {/* Floating Action Button */}
+      <View className="absolute bottom-10 right-5">
         <TouchableOpacity
-          style={{
-            backgroundColor: '#007BFF',
-            width: 56,
-            height: 56,
-            borderRadius: 28,
-            alignItems: 'center',
-            justifyContent: 'center',
-            shadowColor: '#000',
-            shadowOpacity: 0.3,
-            shadowRadius: 4,
-            elevation: 5,
-          }}
+          className="bg-blue-600 w-14 h-14 rounded-full items-center justify-center shadow-lg"
           onPress={() => navigation.navigate('AddLeadScreen')}
         >
           <Ionicons name="add" size={28} color="#fff" />

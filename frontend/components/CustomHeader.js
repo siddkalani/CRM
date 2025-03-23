@@ -1,22 +1,21 @@
-// CustomHeader.js
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useVoice } from '../context/VoiceContext'; // <-- import your voice context
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useVoice } from '../context/VoiceContext';
 
 const CustomHeader = ({
   navigation,
   title = 'Home',
   showBackButton = false,
   showSearchButton = true,
-  enableVoice = true, 
+  enableVoice = true,
   onSearchChange = () => {},
 }) => {
+  const insets = useSafeAreaInsets();
   const [searchMode, setSearchMode] = useState(false);
   const [searchText, setSearchText] = useState('');
 
-  // Get the voice manager from context
   const {
     isRecording,
     recognizedText,
@@ -25,7 +24,6 @@ const CustomHeader = ({
     stopRecording
   } = useVoice();
 
-  // Whenever recognizedText changes (while in search mode), append it to searchText
   useEffect(() => {
     if (searchMode && recognizedText) {
       const newText = searchText
@@ -33,8 +31,6 @@ const CustomHeader = ({
         : recognizedText;
       setSearchText(newText.trim());
       onSearchChange(newText.trim());
-
-      // Clear recognizedText so it doesn't keep re-appending
       setRecognizedText('');
     }
   }, [recognizedText]);
@@ -45,8 +41,8 @@ const CustomHeader = ({
   };
 
   return (
-    <SafeAreaView style={{ backgroundColor: '#007BFF' }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', height: 56, paddingHorizontal: 16 }}>
+    <View style={{ backgroundColor: '#007BFF', paddingTop: insets.top + 5 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', height: 56, paddingHorizontal: 12 }}>
         {searchMode ? (
           <>
             <TouchableOpacity
@@ -54,30 +50,35 @@ const CustomHeader = ({
                 setSearchMode(false);
                 handleSearchInput('');
               }}
-              style={{ marginRight: 10 }}
+              style={{ marginRight: 8 }}
             >
               <Ionicons name="arrow-back" size={24} color="white" />
             </TouchableOpacity>
 
-            <TextInput
-              style={{
-                flex: 1,
-                backgroundColor: '#fff',
-                paddingHorizontal: 8,
-                paddingVertical: 8,
-                borderRadius: 8,
-              }}
-              placeholder="Search..."
-              value={searchText}
-              onChangeText={handleSearchInput}
-              autoFocus
-            />
+            <View style={{
+              flex: 1,
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: 'white',
+              borderRadius: 10,
+              paddingHorizontal: 12,
+              height: 40,
+            }}>
+              <TextInput
+                style={{ flex: 1, paddingVertical: 0 }}
+                placeholder="Search..."
+                value={searchText}
+                onChangeText={handleSearchInput}
+                autoFocus
+              />
 
-            <TouchableOpacity onPress={() => handleSearchInput('')} style={{ marginLeft: 10 }}>
-              <Ionicons name="close" size={24} color="white" />
-            </TouchableOpacity>
+              {searchText.length > 0 && (
+                <TouchableOpacity onPress={() => handleSearchInput('')}>
+                  <Ionicons name="close-circle" size={20} color="#999" />
+                </TouchableOpacity>
+              )}
+            </View>
 
-            {/* Mic only if enabled */}
             {enableVoice && (
               <TouchableOpacity
                 onPress={isRecording ? stopRecording : startRecording}
@@ -105,6 +106,7 @@ const CustomHeader = ({
                 fontSize: 18,
                 flex: 1,
               }}
+              numberOfLines={1}
             >
               {title}
             </Text>
@@ -117,7 +119,7 @@ const CustomHeader = ({
           </>
         )}
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 
