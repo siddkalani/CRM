@@ -110,10 +110,70 @@ const deleteLead = asyncHandler(async (req, res) => {
   res.status(200).json({ message: 'Lead deleted successfully.' });
 });
 
+
+const uploadLeadNote = asyncHandler(async (req, res) => {
+  try {
+    const { leadId } = req.params; // Get leadId from params
+    const { text } = req.body; // Get optional text from request body
+
+    // Ensure at least one of text or file is provided
+    if (!text && !req.file) {
+      return res.status(400).json({ message: 'No text or file provided.' });
+    }
+
+    // Find the lead
+    const lead = await Lead.findById(leadId);
+    if (!lead) {
+      return res.status(404).json({ message: 'Lead not found.' });
+    }
+
+    // Ensure notes array exists
+    if (!Array.isArray(lead.notes)) {
+      lead.notes = [];
+    }
+
+    // Create a new note object
+    const note = {
+      createdAt: new Date(),
+    };
+
+    // Add text if provided
+    if (text) {
+      note.text = text;
+    }
+
+    // Add file details if a file is uploaded
+    if (req.file) {
+      note.fileUrl = req.file.location; // File URL from S3
+      note.fileName = req.file.originalname; // Original file name
+      note.fileType = req.file.mimetype; // MIME type (e.g., image/png, application/pdf)
+    }
+
+    // Push the note to the notes array
+    lead.notes.push(note);
+
+    // Save the updated lead
+    await lead.save();
+
+    // Return success response
+    res.status(201).json({
+      message: 'Note added successfully.',
+      note,
+      lead,
+    });
+  } catch (error) {
+    console.error('Error adding note:', error);
+    res.status(500).json({ message: 'Failed to add note.', error: error.message });
+  }
+});
+
+
+
 module.exports = {
   getLeads,
   addLead,
   updateLead,
   deleteLead,
   getLeadById,
+  uploadLeadNote
 };

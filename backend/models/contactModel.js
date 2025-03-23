@@ -30,8 +30,11 @@ const contactSchema = new mongoose.Schema(
           type: mongoose.Schema.Types.ObjectId,
           default: () => new mongoose.Types.ObjectId(),
         },
-        text: { type: String },
-        createdAt: { type: Date, default: Date.now },
+        text: { type: String }, // For plain text notes
+        fileUrl: { type: String }, // URL of the uploaded file (if any)
+        fileName: { type: String }, // Name of the file
+        fileType: { type: String }, // Type of the file (e.g., image/png, application/pdf)
+        createdAt: { type: Date, default: Date.now }, // Timestamp
       },
     ],
   },
