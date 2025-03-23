@@ -78,19 +78,57 @@ const LeadsScreen = ({ navigation }) => {
   };
   if (!leads.length) {
     return (
-      <View style={{ flex: 1, padding: 16 }}>
-        {[...Array(5)].map((_, idx) => (
-          <View key={idx} style={{ flexDirection: 'row', marginBottom: 16 }}>
-            <SkeletonLoader width={40} height={40} borderRadius={20} />
-            <View style={{ marginLeft: 12, flex: 1 }}>
-              <SkeletonLoader width="80%" height={16} />
-              <SkeletonLoader width="60%" height={14} />
-            </View>
+      <View style={{ flex: 1 }}>
+        {/* Skeleton Header */}
+        <View style={{ backgroundColor: '#007BFF', paddingTop: 40 }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              height: 56,
+              paddingHorizontal: 12,
+            }}
+          >
+            {/* Left icon placeholder (e.g. back button or menu) */}
+            <SkeletonLoader width={24} height={24} borderRadius={4} style={{ marginRight: 10 }} />
+  
+            {/* Title placeholder */}
+            <SkeletonLoader width={100} height={16} borderRadius={4} />
+  
+            {/* Flex filler */}
+            <View style={{ flex: 1 }} />
+  
+            {/* Right icon placeholder (e.g. search icon) */}
+            <SkeletonLoader width={24} height={24} borderRadius={4} />
           </View>
-        ))}
+        </View>
+  
+        {/* Skeleton List Items */}
+        <View style={{ flex: 1, padding: 16 }}>
+          {[...Array(5)].map((_, idx) => (
+            <View
+              key={idx}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginBottom: 16,
+              }}
+            >
+              {/* Circular avatar placeholder */}
+              <SkeletonLoader width={40} height={40} borderRadius={20} />
+  
+              {/* Text lines placeholder */}
+              <View style={{ marginLeft: 12, flex: 1 }}>
+                <SkeletonLoader width="80%" height={16} />
+                <SkeletonLoader width="60%" height={14} />
+              </View>
+            </View>
+          ))}
+        </View>
       </View>
     );
   }
+  
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
@@ -116,9 +154,7 @@ const LeadsScreen = ({ navigation }) => {
         <Text style={{ fontWeight: 'bold', color: '#007BFF' }}>
           All Leads
         </Text>
-        <TouchableOpacity>
-          <Ionicons name="filter-circle-outline" size={24} color="gray" />
-        </TouchableOpacity>
+        
       </View>
 
       {/* Leads List */}

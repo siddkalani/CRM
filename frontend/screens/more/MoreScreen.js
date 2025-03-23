@@ -11,11 +11,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from '../../constants/constant';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import SkeletonLoader from '../../components/SkeletonLoader'; // <--- import your skeleton
 
 const ProfileScreen = () => {
   const navigation = useNavigation();
+  
+  // Local states
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  
+  // NEW: loading flag
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchCurrentUser = async () => {
     try {
@@ -41,8 +47,15 @@ const ProfileScreen = () => {
       setUsername(data.username || '');
     } catch (error) {
       Alert.alert('Error', error.message);
+    } finally {
+      // Stop skeleton loading
+      setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchCurrentUser();
+  }, []);
 
   const updateProfile = async () => {
     if (!username.trim() || !password.trim()) {
@@ -93,7 +106,6 @@ const ProfileScreen = () => {
             try {
               await AsyncStorage.removeItem('token');
               await AsyncStorage.removeItem('userId');
-  
               navigation.reset({
                 index: 0,
                 routes: [{ name: 'LogIn' }],
@@ -107,12 +119,43 @@ const ProfileScreen = () => {
       { cancelable: true }
     );
   };
-  
 
-  useEffect(() => {
-    fetchCurrentUser();
-  }, []);
+  // 2) If still loading, show skeleton placeholders
+  if (isLoading) {
+    return (
+      <ScrollView className="flex-1 bg-white px-4 py-6">
+        {/* Skeleton Profile Icon + Title */}
+        <View className="items-center mb-6">
+          {/* Circular icon placeholder */}
+          <SkeletonLoader width={96} height={96} borderRadius={48} />
+          {/* "Edit Profile" text placeholder */}
+          <SkeletonLoader width={100} height={20} borderRadius={4} style={{ marginTop: 8 }} />
+        </View>
 
+        {/* Username skeleton */}
+        <View className="mb-4">
+          {/* Label placeholder */}
+          <SkeletonLoader width={80} height={16} borderRadius={4} />
+          {/* Input placeholder */}
+          <SkeletonLoader width="100%" height={40} borderRadius={8} style={{ marginTop: 8 }} />
+        </View>
+
+        {/* Password skeleton */}
+        <View className="mb-4">
+          <SkeletonLoader width={100} height={16} borderRadius={4} />
+          <SkeletonLoader width="100%" height={40} borderRadius={8} style={{ marginTop: 8 }} />
+        </View>
+
+        {/* "Save Settings" button placeholder */}
+        <SkeletonLoader width="100%" height={50} borderRadius={8} />
+
+        {/* "Logout" button placeholder */}
+        <SkeletonLoader width="100%" height={50} borderRadius={8} style={{ marginTop: 16 }} />
+      </ScrollView>
+    );
+  }
+
+  // 3) Otherwise, show real UI
   return (
     <ScrollView className="flex-1 bg-white px-4 py-6">
       <View className="items-center mb-6">
