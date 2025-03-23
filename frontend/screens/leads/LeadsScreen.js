@@ -166,44 +166,52 @@ const LeadsScreen = ({ navigation }) => {
 
       {/* Leads List */}
       <FlatList
-        data={filteredLeads}
-        keyExtractor={(item) => item._id?.toString()}
-        ListEmptyComponent={renderEmptyState}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            onPress={() => navigation.navigate('LeadDetailsScreen', { lead: item })}
-            className="p-4 border-b border-gray-100 active:bg-gray-50"
-          >
-            <View className="flex-row items-center">
-              <View className="w-10 h-10 rounded-full bg-blue-100 items-center justify-center mr-3">
-                <Text className="text-blue-600 font-bold text-lg">
-                  {`${item.firstName?.[0] || ''}${item.lastName?.[0] || ''}`}
-                </Text>
-              </View>
-              <View className="flex-1">
-                <Text className="font-semibold text-gray-800">
-                  {item.firstName} {item.lastName}
-                </Text>
-                <Text className="text-gray-500 text-sm">{item.email || 'No email provided'}</Text>
-                {item.phone && (
-                  <Text className="text-gray-500 text-sm">{item.phone}</Text>
-                )}
-              </View>
-              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
-            </View>
+  data={filteredLeads}
+  keyExtractor={(item) => item._id?.toString()}
+  ListEmptyComponent={renderEmptyState}
+  renderItem={({ item }) => (
+    <TouchableOpacity
+      onPress={() => navigation.navigate('LeadDetailsScreen', { lead: item })}
+      className="p-4 border-b border-gray-100 active:bg-gray-50"
+    >
+      <View className="flex-row items-center">
+        {/* Avatar with initials */}
+        <View className="w-14 h-14 rounded-full bg-blue-100 items-center justify-center mr-3">
+          <Text className="text-blue-600 font-bold text-xl">
+            {`${item.firstName?.[0] || ''}${item.lastName?.[0] || ''}`}
+          </Text>
+        </View>
 
-            {item.matchedNotes && item.matchedNotes.length > 0 && (
-              <View className="mt-2 ml-12 pl-2 border-l-2 border-blue-200">
-                {item.matchedNotes.map((note) => (
-                  <Text key={note._id} className="text-gray-600 text-sm my-1">
-                    {note.text}
-                  </Text>
-                ))}
-              </View>
-            )}
-          </TouchableOpacity>
-        )}
-      />
+        {/* Lead info */}
+        <View className="flex-1">
+          <Text className="font-semibold text-gray-800">
+            {item.firstName} {item.lastName}
+          </Text>
+          <Text className="text-gray-500 text-sm">
+            {item.email || 'No email provided'}
+          </Text>
+          {item.phone && (
+            <Text className="text-gray-500 text-sm">{item.phone}</Text>
+          )}
+        </View>
+
+        <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+      </View>
+
+      {/* Display matched notes if searching */}
+      {item.matchedNotes && item.matchedNotes.length > 0 && (
+        <View className="mt-2 ml-12 pl-2 border-l-2 border-blue-200">
+          {item.matchedNotes.map((note) => (
+            <Text key={note._id} className="text-gray-600 text-sm my-1">
+              {note.text}
+            </Text>
+          ))}
+        </View>
+      )}
+    </TouchableOpacity>
+  )}
+/>
+
 
       {/* Floating Action Button */}
       <View className="absolute bottom-10 right-5">
