@@ -1,32 +1,35 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   ScrollView,
-  Image,
   TextInput,
+  Linking,
+  Share,
   Alert,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { BASE_URL } from '../../constants/constant';
-import { useFocusEffect } from '@react-navigation/native';
-import CustomHeader from '../../components/CustomHeader';
-import { useVoice } from '../../context/VoiceContext'; // <-- Voice Context
-import SkeletonLoader from '../../components/SkeletonLoader';
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import SkeletonLoader from "../../components/SkeletonLoader";
+import { BASE_URL } from "../../constants/constant";
+import CustomHeader from "../../components/CustomHeader";
+import { useVoice } from "../../context/VoiceContext";
+import * as DocumentPicker from "expo-document-picker";
 
 const ContactDetailsScreen = ({ route, navigation }) => {
-  const contactParam = route.params?.contact;
-  const contactId = contactParam?._id;
+  // We expect `contact` from route params
+  const contact = route.params?.contact;
+  const contactId = contact?._id;
 
-  const [contactDetails, setContactDetails] = useState(contactParam || null);
-  const [searchText, setSearchText] = useState('');
+  const [contactDetails, setContactDetails] = useState(contact || null);
+  const [searchText, setSearchText] = useState("");
   const [filteredNotes, setFilteredNotes] = useState([]);
-  const [newNote, setNewNote] = useState('');
+  const [newNote, setNewNote] = useState("");
   const [editNoteId, setEditNoteId] = useState(null);
-  const [editNoteText, setEditNoteText] = useState('');
+  const [editNoteText, setEditNoteText] = useState("");
+  const [attachedDocument, setAttachedDocument] = useState(null);
 
-  // Voice input
+  // Voice context
   const {
     isRecording,
     recognizedText,
@@ -35,69 +38,86 @@ const ContactDetailsScreen = ({ route, navigation }) => {
     stopRecording,
   } = useVoice();
 
-  // Append recognized voice text to newNote
+  // Append recognized text to newNote
   useEffect(() => {
     if (recognizedText) {
       setNewNote((prev) => (prev ? `${prev} ${recognizedText}` : recognizedText));
-      setRecognizedText('');
+      setRecognizedText("");
     }
   }, [recognizedText]);
 
-  const fetchContactDetails = async (id) => {
-    try {
-      const response = await fetch(`${BASE_URL}/api/contacts/one/${id}`, {
-        headers: {
-          'Cache-Control': 'no-cache',
-        },
-      });
-      if (!response.ok) throw new Error('Failed to fetch contact details');
-      const data = await response.json();
-      setContactDetails(data);
-      if (data.notes && Array.isArray(data.notes)) {
-        setFilteredNotes(data.notes);
-      }
-    } catch (error) {
-      console.error('Error fetching contact:', error);
-    }
-  };
-
+  // Fetch contact details
   useEffect(() => {
     if (contactId) fetchContactDetails(contactId);
   }, [contactId]);
 
-  useFocusEffect(
-    useCallback(() => {
-      let intervalId;
-      return () => {
-        if (intervalId) clearInterval(intervalId);
-      };
-    }, [contactId])
-  );
+  const fetchContactDetails = async (id) => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/contacts/one/${id}`);
+      const data = await response.json();
+      setContactDetails(data);
+      if (Array.isArray(data.notes)) {
+        setFilteredNotes(data.notes);
+      }
+    } catch (error) {
+      console.error("Error fetching contact details:", error);
+    }
+  };
 
+  // Document picker
+  const handlePickDocument = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: "*/*",
+        copyToCacheDirectory: true,
+        multiple: false,
+      });
+
+      if (!result.canceled && result.assets?.length) {
+        const doc = result.assets[0];
+        if (!doc.name) {
+          doc.name = doc.uri.split("/").pop();
+        }
+        setAttachedDocument(doc);
+      }
+    } catch (error) {
+      console.warn("Document picking failed:", error);
+    }
+  };
+
+  // Add note
   const handleAddNote = async () => {
     if (!newNote.trim()) return;
+
     try {
       const response = await fetch(`${BASE_URL}/api/contacts/one/${contactId}/notes`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: newNote.trim() }),
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: newNote.trim(),
+          // doc info not sent to backend unless you do formData
+        }),
       });
-      if (!response.ok) throw new Error('Failed to add note');
+
+      if (!response.ok) throw new Error("Failed to add note");
+
       const updatedContact = await response.json();
       setContactDetails(updatedContact);
-      setNewNote('');
-      if (updatedContact.notes && Array.isArray(updatedContact.notes)) {
+      setNewNote("");
+      setAttachedDocument(null);
+
+      if (Array.isArray(updatedContact.notes)) {
         setFilteredNotes(updatedContact.notes);
         if (searchText.trim()) {
           filterNotes(searchText, updatedContact.notes);
         }
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to add note.');
-      console.error(error);
+      Alert.alert("Error", "Failed to add note.");
     }
   };
 
+  // Edit note
   const handleEditNote = (noteId, currentText) => {
     setEditNoteId(noteId);
     setEditNoteText(currentText);
@@ -108,49 +128,53 @@ const ContactDetailsScreen = ({ route, navigation }) => {
       const response = await fetch(
         `${BASE_URL}/api/contacts/one/${contactId}/notes/${editNoteId}`,
         {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text: editNoteText }),
         }
       );
-      if (!response.ok) throw new Error('Failed to update note');
+
+      if (!response.ok) throw new Error("Failed to update note");
+
       const updatedContact = await response.json();
       setContactDetails(updatedContact);
       setEditNoteId(null);
-      setEditNoteText('');
-      if (updatedContact.notes && Array.isArray(updatedContact.notes)) {
+      setEditNoteText("");
+
+      if (Array.isArray(updatedContact.notes)) {
         setFilteredNotes(updatedContact.notes);
-        if (searchText.trim()) {
-          filterNotes(searchText, updatedContact.notes);
-        }
+        if (searchText.trim()) filterNotes(searchText, updatedContact.notes);
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to update note.');
-      console.error(error);
+      Alert.alert("Error", "Failed to update note.");
     }
   };
 
+  // Delete note
   const handleDeleteNote = async (noteId) => {
     try {
       const response = await fetch(
         `${BASE_URL}/api/contacts/one/${contactId}/notes/${noteId}`,
-        { method: 'DELETE' }
+        {
+          method: "DELETE",
+        }
       );
-      if (!response.ok) throw new Error('Failed to delete note');
+
+      if (!response.ok) throw new Error("Failed to delete note");
+
       const updatedContact = await response.json();
       setContactDetails(updatedContact);
-      if (updatedContact.notes && Array.isArray(updatedContact.notes)) {
+
+      if (Array.isArray(updatedContact.notes)) {
         setFilteredNotes(updatedContact.notes);
-        if (searchText.trim()) {
-          filterNotes(searchText, updatedContact.notes);
-        }
+        if (searchText.trim()) filterNotes(searchText, updatedContact.notes);
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to delete note.');
-      console.error(error);
+      Alert.alert("Error", "Failed to delete note.");
     }
   };
 
+  // Searching
   const handleSearchChange = (text) => {
     setSearchText(text);
     filterNotes(text, contactDetails.notes || []);
@@ -168,9 +192,21 @@ const ContactDetailsScreen = ({ route, navigation }) => {
     setFilteredNotes(matched);
   };
 
+  // Share note
+  const handleShareNote = async (note) => {
+    try {
+      await Share.share({
+        message: note.text,
+        title: "Share Note",
+      });
+    } catch (error) {
+      Alert.alert("Error", "Failed to share the note.");
+    }
+  };
+
   if (!contactDetails) {
     return (
-      <View style={{ flex: 1, padding: 16, backgroundColor: '#fff' }}>
+      <View style={{ flex: 1, padding: 16, backgroundColor: "#fff" }}>
         <SkeletonLoader width="60%" height={20} />
         <SkeletonLoader width="40%" height={16} />
         <SkeletonLoader width="50%" height={16} />
@@ -183,124 +219,296 @@ const ContactDetailsScreen = ({ route, navigation }) => {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#fff' }}>
+    <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <CustomHeader
         navigation={navigation}
         title="Contact Details"
-        showBackButton={true}
-        showSearchButton={true}
+        showBackButton
         onSearchChange={handleSearchChange}
-        enableVoice={false} // Disable voice in header, since we're using it in notes
+        enableVoice={false}
       />
 
       <ScrollView contentContainerStyle={{ padding: 16 }}>
-        {/* Contact Info */}
-        <View style={{ flexDirection: 'row', marginBottom: 16 }}>
-          <View style={{ flex: 1, marginRight: 8 }}>
-            <Text style={{ fontSize: 16, fontWeight: '600' }}>
-              {contactDetails.firstName} {contactDetails.lastName}
-            </Text>
-            <Text style={{ color: '#007BFF', marginTop: 4 }}>{contactDetails.email}</Text>
-            <Text style={{ marginTop: 4 }}>{contactDetails.phone}</Text>
-            {!!contactDetails.company && (
-              <Text style={{ marginTop: 4 }}>{contactDetails.company}</Text>
-            )}
+        {/* Contact Info Card */}
+        <View style={{
+          backgroundColor: '#E0F2FE',
+          borderRadius: 12,
+          padding: 16,
+          marginBottom: 16,
+          shadowColor: '#000',
+          shadowOpacity: 0.05,
+          shadowRadius: 3,
+        }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            {/* Left: Contact Details */}
+            <View style={{ flex: 1, marginRight: 12 }}>
+              <Text style={{ fontSize: 18, fontWeight: '600', color: '#0F172A' }}>
+                {contactDetails.firstName} {contactDetails.lastName}
+              </Text>
+              <Text style={{ color: '#0284C7', marginTop: 4 }}>
+                {contactDetails.email}
+              </Text>
+              {contactDetails.phone && (
+                <Text style={{ marginTop: 4, color: '#475569' }}>
+                  {contactDetails.phone}
+                </Text>
+              )}
+              {contactDetails.company && (
+                <Text style={{ marginTop: 4, color: '#475569' }}>
+                  {contactDetails.company}
+                </Text>
+              )}
 
-            <TouchableOpacity
-              style={{
-                borderWidth: 1,
-                borderColor: '#007BFF',
-                borderRadius: 4,
-                paddingHorizontal: 8,
-                paddingVertical: 4,
-                marginTop: 8,
-                alignSelf: 'flex-start',
-              }}
-            >
-              <Text style={{ color: '#007BFF' }}>+ Tag</Text>
-            </TouchableOpacity>
+              <View style={{ flexDirection: 'row', marginTop: 8 }}>
+                <TouchableOpacity style={{
+                  backgroundColor: '#FFF',
+                  borderWidth: 1,
+                  borderColor: '#CCC',
+                  paddingHorizontal: 8,
+                  paddingVertical: 4,
+                  borderRadius: 8,
+                }}>
+                  <Text style={{ color: '#475569', fontSize: 12 }}>
+                    Status: Contact
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Right: Initials Avatar */}
+            <View style={{
+              width: 60,
+              height: 60,
+              borderRadius: 30,
+              backgroundColor: '#BAE6FD',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <Text style={{ color: '#0284C7', fontSize: 20, fontWeight: '700' }}>
+                {`${contactDetails.firstName?.[0] || ''}${contactDetails.lastName?.[0] || ''}`}
+              </Text>
+            </View>
           </View>
-          <Image
-            source={{ uri: 'https://via.placeholder.com/60' }}
-            style={{ width: 60, height: 60, borderRadius: 30 }}
-          />
         </View>
 
-        {/* Add New Note */}
-        <View style={{ borderTopWidth: 1, borderTopColor: '#ccc', paddingTop: 12 }}>
-          <Text style={{ fontWeight: '600', marginBottom: 8 }}>Add a New Note</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        {/* Quick Actions */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
+          <TouchableOpacity
+            style={{
+              backgroundColor: '#3B82F6',
+              borderRadius: 8,
+              paddingVertical: 8,
+              paddingHorizontal: 16,
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}
+            onPress={() => {
+              if (contactDetails.phone) {
+                Linking.openURL(`tel:${contactDetails.phone}`);
+              } else {
+                Alert.alert("Error", "Phone number is not available.");
+              }
+            }}
+          >
+            <Ionicons name="call-outline" size={18} color="#fff" />
+            <Text style={{ color: '#fff', marginLeft: 8 }}>Call</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={{
+              backgroundColor: '#10B981',
+              borderRadius: 8,
+              paddingVertical: 8,
+              paddingHorizontal: 16,
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}
+            onPress={() => {
+              if (contactDetails.email) {
+                Linking.openURL(`mailto:${contactDetails.email}`);
+              } else {
+                Alert.alert("Error", "Email is not available.");
+              }
+            }}
+          >
+            <Ionicons name="mail-outline" size={18} color="#fff" />
+            <Text style={{ color: '#fff', marginLeft: 8 }}>Email</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={{
+              backgroundColor: '#8B5CF6',
+              borderRadius: 8,
+              paddingVertical: 8,
+              paddingHorizontal: 16,
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}
+            onPress={async () => {
+              try {
+                await Share.share({
+                  message: `Contact Details:\nName: ${contactDetails.firstName} ${contactDetails.lastName}\nEmail: ${contactDetails.email}\nPhone: ${contactDetails.phone}`,
+                  title: "Share Contact Details",
+                });
+              } catch (error) {
+                Alert.alert("Error", "Failed to share the contact details.");
+              }
+            }}
+          >
+            <Ionicons name="share-social-outline" size={18} color="#fff" />
+            <Text style={{ color: '#fff', marginLeft: 8 }}>Share</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Add Note Section */}
+        <View style={{
+          backgroundColor: '#E0F2FE',
+          borderRadius: 12,
+          padding: 16,
+          marginBottom: 16,
+          shadowColor: '#000',
+          shadowOpacity: 0.05,
+          shadowRadius: 3,
+        }}>
+          <Text style={{ fontWeight: '600', fontSize: 16, color: '#0F172A', marginBottom: 8 }}>
+            Add a Note
+          </Text>
+
+          {/* The Note Input + Mic */}
+          <View style={{ position: 'relative', marginBottom: 12 }}>
             <TextInput
               style={{
-                borderWidth: 1,
+                backgroundColor: '#fff',
                 borderColor: '#ccc',
-                borderRadius: 4,
-                padding: 8,
+                borderWidth: 1,
+                borderRadius: 8,
                 minHeight: 60,
-                flex: 1,
-                textAlignVertical: 'top',
+                paddingHorizontal: 16,
+                paddingRight: 48,
+                paddingVertical: 8,
+                color: '#0F172A',
               }}
-              placeholder="Type your new note here..."
               multiline
+              placeholder="Start typing here..."
+              placeholderTextColor="#9CA3AF"
               value={newNote}
               onChangeText={setNewNote}
             />
+
             <TouchableOpacity
               onPress={isRecording ? stopRecording : startRecording}
               style={{
-                marginLeft: 8,
-                backgroundColor: isRecording ? 'red' : '#007BFF',
+                position: 'absolute',
+                right: 8,
+                bottom: 8,
                 padding: 10,
-                borderRadius: 8,
+                borderRadius: 20,
+                backgroundColor: isRecording ? 'red' : '#3B82F6',
               }}
             >
               <Ionicons
-                name={isRecording ? 'mic-off' : 'mic'}
-                size={24}
+                name={isRecording ? "mic-off" : "mic"}
+                size={20}
                 color="#fff"
               />
             </TouchableOpacity>
           </View>
-          <TouchableOpacity
-            onPress={handleAddNote}
-            style={{
-              backgroundColor: '#007BFF',
-              borderRadius: 4,
-              paddingVertical: 8,
-              paddingHorizontal: 16,
-              marginTop: 8,
-              alignSelf: 'flex-start',
-            }}
-          >
-            <Text style={{ color: '#fff' }}>Save Note</Text>
-          </TouchableOpacity>
+
+          {/* Document attach (placeholder UI – not fully integrated) */}
+          {attachedDocument && (
+            <View style={{
+              backgroundColor: '#FEF9C3',
+              padding: 8,
+              borderRadius: 8,
+              marginBottom: 8,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}>
+              <Ionicons name="document-attach" size={18} color="#CA8A04" />
+              <Text style={{ marginLeft: 8, flex: 1, color: '#CA8A04' }}>
+                {attachedDocument.name || 'Unnamed Document'}
+              </Text>
+              <TouchableOpacity onPress={() => setAttachedDocument(null)}>
+                <Ionicons name="close-circle" size={20} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+          )}
+
+          <View style={{ flexDirection: 'row' }}>
+            <TouchableOpacity
+              onPress={handleAddNote}
+              style={{
+                backgroundColor: '#3B82F6',
+                borderRadius: 8,
+                paddingHorizontal: 16,
+                paddingVertical: 8,
+                flex: 1,
+                marginRight: 8,
+              }}
+            >
+              <Text style={{ color: '#fff', textAlign: 'center', fontWeight: '600' }}>
+                Save Note
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={handlePickDocument}
+              style={{
+                backgroundColor: '#374151',
+                borderRadius: 8,
+                paddingHorizontal: 16,
+                paddingVertical: 8,
+                flexDirection: 'row',
+                alignItems: 'center',
+              }}
+            >
+              <Ionicons name="attach" size={18} color="#fff" />
+              <Text style={{ color: '#fff', marginLeft: 6 }}>Attach</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
-        {/* Notes */}
-        <View style={{ marginTop: 16 }}>
-          <Text style={{ fontWeight: '600', fontSize: 16 }}>Notes</Text>
+        {/* Notes List */}
+        <View>
+          <View style={{ 
+            flexDirection: 'row', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            marginBottom: 8 
+          }}>
+            <Text style={{ fontSize: 16, fontWeight: '600', color: '#0F172A' }}>
+              Notes
+            </Text>
+            <Text style={{ fontSize: 14, color: '#6B7280' }}>
+              {filteredNotes.length} notes
+            </Text>
+          </View>
+
           {Array.isArray(filteredNotes) && filteredNotes.length > 0 ? (
             [...filteredNotes].reverse().map((note) => (
               <View
                 key={note._id}
                 style={{
+                  backgroundColor: '#fff',
+                  borderColor: '#E5E7EB',
                   borderWidth: 1,
-                  borderColor: '#ccc',
-                  borderRadius: 4,
-                  padding: 8,
-                  marginTop: 8,
+                  borderRadius: 8,
+                  padding: 12,
+                  marginBottom: 12,
                 }}
               >
                 {editNoteId === note._id ? (
                   <>
                     <TextInput
                       style={{
+                        backgroundColor: '#F9FAFB',
                         borderWidth: 1,
-                        borderColor: '#ccc',
-                        borderRadius: 4,
+                        borderColor: '#D1D5DB',
+                        borderRadius: 6,
                         padding: 8,
-                        minHeight: 40,
-                        textAlignVertical: 'top',
+                        minHeight: 60,
+                        color: '#111827',
                       }}
                       multiline
                       value={editNoteText}
@@ -310,55 +518,76 @@ const ContactDetailsScreen = ({ route, navigation }) => {
                       <TouchableOpacity
                         onPress={handleSaveEditedNote}
                         style={{
-                          backgroundColor: 'green',
-                          paddingVertical: 4,
-                          paddingHorizontal: 12,
-                          borderRadius: 4,
+                          backgroundColor: '#10B981',
+                          paddingHorizontal: 16,
+                          paddingVertical: 8,
+                          borderRadius: 6,
                           marginRight: 8,
                         }}
                       >
-                        <Text style={{ color: '#fff' }}>Save</Text>
+                        <Text style={{ color: '#fff', fontWeight: '600' }}>Save</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         onPress={() => {
                           setEditNoteId(null);
-                          setEditNoteText('');
+                          setEditNoteText("");
                         }}
                         style={{
-                          backgroundColor: '#999',
-                          paddingVertical: 4,
-                          paddingHorizontal: 12,
-                          borderRadius: 4,
+                          backgroundColor: '#9CA3AF',
+                          paddingHorizontal: 16,
+                          paddingVertical: 8,
+                          borderRadius: 6,
                         }}
                       >
-                        <Text style={{ color: '#fff' }}>Cancel</Text>
+                        <Text style={{ color: '#fff', fontWeight: '600' }}>Cancel</Text>
                       </TouchableOpacity>
                     </View>
                   </>
                 ) : (
                   <>
-                    <Text style={{ fontSize: 14 }}>{note.text}</Text>
-                    <Text style={{ color: '#666', fontSize: 12, marginTop: 4 }}>
+                    <Text style={{ color: '#111827', marginBottom: 4 }}>
+                      {note.text}
+                    </Text>
+                    <Text style={{ color: '#6B7280', fontSize: 12 }}>
                       {new Date(note.createdAt).toLocaleString()}
                     </Text>
-                    <View style={{ flexDirection: 'row', marginTop: 8 }}>
+                    <View 
+                      style={{ 
+                        flexDirection: 'row', 
+                        marginTop: 8, 
+                        paddingTop: 8, 
+                        borderTopWidth: 1, 
+                        borderTopColor: '#F3F4F6' 
+                      }}
+                    >
                       <TouchableOpacity
                         onPress={() => handleEditNote(note._id, note.text)}
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          marginRight: 16,
-                        }}
+                        style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}
                       >
-                        <Ionicons name="create-outline" size={16} color="blue" />
-                        <Text style={{ color: 'blue', marginLeft: 4 }}>Edit</Text>
+                        <Ionicons name="create-outline" size={16} color="#3B82F6" />
+                        <Text style={{ color: '#3B82F6', marginLeft: 4, fontSize: 13 }}>
+                          Edit
+                        </Text>
                       </TouchableOpacity>
+
                       <TouchableOpacity
                         onPress={() => handleDeleteNote(note._id)}
+                        style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}
+                      >
+                        <Ionicons name="trash-outline" size={16} color="#EF4444" />
+                        <Text style={{ color: '#EF4444', marginLeft: 4, fontSize: 13 }}>
+                          Delete
+                        </Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        onPress={() => handleShareNote(note)}
                         style={{ flexDirection: 'row', alignItems: 'center' }}
                       >
-                        <Ionicons name="trash-outline" size={16} color="red" />
-                        <Text style={{ color: 'red', marginLeft: 4 }}>Delete</Text>
+                        <Ionicons name="share-outline" size={16} color="#10B981" />
+                        <Text style={{ color: '#10B981', marginLeft: 4, fontSize: 13 }}>
+                          Share
+                        </Text>
                       </TouchableOpacity>
                     </View>
                   </>
@@ -366,26 +595,21 @@ const ContactDetailsScreen = ({ route, navigation }) => {
               </View>
             ))
           ) : (
-            <Text style={{ marginTop: 8, color: '#666' }}>No notes available.</Text>
+            <View style={{ 
+              backgroundColor: '#F9FAFB', 
+              padding: 20, 
+              borderRadius: 8, 
+              alignItems: 'center', 
+              justifyContent: 'center' 
+            }}>
+              <Ionicons name="document-text-outline" size={36} color="#9CA3AF" />
+              <Text style={{ color: '#6B7280', marginTop: 8, textAlign: 'center' }}>
+                No notes available. Add your first note above.
+              </Text>
+            </View>
           )}
         </View>
       </ScrollView>
-
-      {/* Bottom Icons */}
-      <View
-        style={{
-          flexDirection: 'row',
-          borderTopWidth: 1,
-          borderTopColor: '#ccc',
-          justifyContent: 'space-around',
-          paddingVertical: 8,
-        }}
-      >
-        <Ionicons name="mail-outline" size={24} color="#666" />
-        <Ionicons name="checkmark-done-outline" size={24} color="#666" />
-        <Ionicons name="map-outline" size={24} color="#666" />
-        <Ionicons name="call-outline" size={24} color="#666" />
-      </View>
     </View>
   );
 };

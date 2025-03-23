@@ -71,17 +71,20 @@ const LeadDetailsScreen = ({ route, navigation }) => {
         copyToCacheDirectory: true,
         multiple: false, // just to be safe
       });
-  
-      console.log("🎯 PICKED DOCUMENT RESULT:", JSON.stringify(result, null, 2));
-  
+
+      console.log(
+        "🎯 PICKED DOCUMENT RESULT:",
+        JSON.stringify(result, null, 2)
+      );
+
       if (!result.canceled && result.assets?.length) {
         const doc = result.assets[0];
-  
+
         // Fallback name if needed
         if (!doc.name) {
           doc.name = doc.uri.split("/").pop();
         }
-  
+
         setAttachedDocument(doc); // 👈 this was the missing piece
       }
     } catch (error) {
@@ -220,36 +223,41 @@ const LeadDetailsScreen = ({ route, navigation }) => {
         <View className="p-4">
           {/* Lead Info Card */}
           <View className="bg-blue-50 rounded-xl p-4 mb-4 shadow-sm">
-            <View className="flex-row">
-              <View className="flex-1 pr-3">
-                <Text className="text-lg font-bold text-gray-800">
-                  {leadDetails.firstName} {leadDetails.lastName}
-                </Text>
-                <Text className="text-blue-600 mt-1">
-                  {leadDetails.email}
-                </Text>
-                <Text className="text-gray-600 mt-1">{leadDetails.phone}</Text>
-                {!!leadDetails.company && (
-                  <Text className="text-gray-600 mt-1">{leadDetails.company}</Text>
-                )}
-                
-                <View className="flex-row mt-3">
-                 
-                  <TouchableOpacity className="bg-gray-300 py-1 px-3 rounded-full">
-                    <Text className="text-gray-600 text-sm">Status: Lead</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-              <Image
-                source={{ uri: "https://via.placeholder.com/60" }}
-                className="w-16 h-16 rounded-full bg-gray-200"
-              />
-            </View>
-          </View>
+  <View className="flex-row items-center">
+    {/* Left: Details */}
+    <View className="flex-1 pr-4">
+      <Text className="text-lg font-semibold text-gray-800">
+        {leadDetails.firstName} {leadDetails.lastName}
+      </Text>
+      <Text className="text-blue-600 mt-1">{leadDetails.email}</Text>
+      <Text className="text-gray-600 mt-1">{leadDetails.phone}</Text>
+      {!!leadDetails.company && (
+        <Text className="text-gray-600 mt-1">{leadDetails.company}</Text>
+      )}
+
+      <View className="flex-row mt-3">
+        <TouchableOpacity className="bg-white border border-gray-300 px-3 py-1 rounded-full">
+          <Text className="text-gray-600 text-sm">Status: Lead</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+
+    {/* Right: Avatar/Initials */}
+    <TouchableOpacity
+      activeOpacity={0.7}
+      className="w-16 h-16 rounded-full bg-blue-100 items-center justify-center"
+    >
+      <Text className="text-blue-700 font-bold text-xl">
+        {`${leadDetails.firstName?.[0] || ''}${leadDetails.lastName?.[0] || ''}`}
+      </Text>
+    </TouchableOpacity>
+  </View>
+</View>
+
 
           {/* Quick Actions */}
           <View className="flex-row justify-between mb-6">
-            <TouchableOpacity 
+            <TouchableOpacity
               className="bg-blue-500 rounded-lg py-2 px-4 flex-row items-center"
               onPress={() => {
                 if (leadDetails.phone) {
@@ -262,8 +270,8 @@ const LeadDetailsScreen = ({ route, navigation }) => {
               <Ionicons name="call-outline" size={18} color="#fff" />
               <Text className="text-white ml-2">Call</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               className="bg-green-500 rounded-lg py-2 px-4 flex-row items-center"
               onPress={() => {
                 if (leadDetails.email) {
@@ -276,8 +284,8 @@ const LeadDetailsScreen = ({ route, navigation }) => {
               <Ionicons name="mail-outline" size={18} color="#fff" />
               <Text className="text-white ml-2">Email</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               className="bg-purple-500 rounded-lg py-2 px-4 flex-row items-center"
               onPress={async () => {
                 try {
@@ -296,61 +304,69 @@ const LeadDetailsScreen = ({ route, navigation }) => {
           </View>
 
           {/* Add Note Section */}
-          <View className="bg-gray-50 rounded-xl p-4 mb-6 shadow-sm">
+          <View className="bg-blue-50 rounded-xl p-4 mb-6 shadow-sm">
             <Text className="font-bold text-gray-800 mb-2">Add Leads</Text>
-            <View className="flex-row items-start">
+            <View className="relative mb-3">
               <TextInput
-                className="bg-white border border-gray-200 rounded-lg p-3 min-h-16 flex-1 text-gray-800"
-                placeholder="Type your new note here..."
+                className="bg-white border border-gray-300 rounded-lg p-4 pr-14 text-gray-800 min-h-[64px]"
+                placeholder="Start typing here..."
                 multiline
                 value={newNote}
                 onChangeText={setNewNote}
                 placeholderTextColor="#9CA3AF"
               />
+
               <TouchableOpacity
                 onPress={isRecording ? stopRecording : startRecording}
-                className={`ml-2 p-3 rounded-lg ${isRecording ? "bg-red-500" : "bg-blue-500"}`}
+                className={`absolute right-3 bottom-3 p-3 rounded-full ${isRecording ? "bg-red-500" : "bg-blue-500"
+                  }`}
               >
                 <Ionicons
                   name={isRecording ? "mic-off" : "mic"}
-                  size={24}
+                  size={20}
                   color="#fff"
                 />
               </TouchableOpacity>
             </View>
 
+
             {/* Document attachment & buttons */}
             <View className="mt-3">
-            {attachedDocument && (
-  <View className="bg-blue-50 p-3 rounded-lg mb-4">
-    <View className="flex-row items-center justify-between">
-      <Ionicons name="document-attach" size={18} color="#3B82F6" />
-      <Text className="text-blue-600 ml-2 flex-1 truncate">
-        {attachedDocument.name || 'Unnamed Document'}
-      </Text>
-      <TouchableOpacity onPress={() => setAttachedDocument(null)}>
-        <Ionicons name="close-circle" size={20} color="#6B7280" />
-      </TouchableOpacity>
-    </View>
+              {attachedDocument && (
+                <View className="bg-blue-50 p-3 rounded-lg mb-4">
+                  <View className="flex-row items-center justify-between">
+                    <Ionicons
+                      name="document-attach"
+                      size={18}
+                      color="#3B82F6"
+                    />
+                    <Text className="text-blue-600 ml-2 flex-1 truncate">
+                      {attachedDocument.name || "Unnamed Document"}
+                    </Text>
+                    <TouchableOpacity onPress={() => setAttachedDocument(null)}>
+                      <Ionicons name="close-circle" size={20} color="#6B7280" />
+                    </TouchableOpacity>
+                  </View>
 
-    {/* Show preview if it's an image */}
-    {attachedDocument.mimeType?.startsWith("image/") && (
-      <Image
-        source={{ uri: attachedDocument.uri }}
-        className="w-24 h-24 mt-3 rounded-md bg-gray-200"
-        resizeMode="cover"
-      />
-    )}
-  </View>
-)}
+                  {/* Show preview if it's an image */}
+                  {attachedDocument.mimeType?.startsWith("image/") && (
+                    <Image
+                      source={{ uri: attachedDocument.uri }}
+                      className="w-24 h-24 mt-3 rounded-md bg-gray-200"
+                      resizeMode="cover"
+                    />
+                  )}
+                </View>
+              )}
 
-              
               <View className="flex-row">
                 <TouchableOpacity
                   onPress={handleAddNote}
                   className="bg-blue-500 rounded-lg py-2 px-4 flex-1 mr-2"
                 >
-                  <Text className="text-white text-center font-medium">Save Note</Text>
+                  <Text className="text-white text-center font-medium">
+                    Save Note
+                  </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -368,9 +384,11 @@ const LeadDetailsScreen = ({ route, navigation }) => {
           <View>
             <View className="flex-row justify-between items-center mb-3">
               <Text className="text-lg font-bold text-gray-800">Notes</Text>
-              <Text className="text-gray-500 text-sm">{filteredNotes.length} notes</Text>
+              <Text className="text-gray-500 text-sm">
+                {filteredNotes.length} notes
+              </Text>
             </View>
-            
+
             {Array.isArray(filteredNotes) && filteredNotes.length > 0 ? (
               [...filteredNotes].reverse().map((note) => (
                 <View
@@ -399,13 +417,17 @@ const LeadDetailsScreen = ({ route, navigation }) => {
                           }}
                           className="bg-gray-300 py-2 px-4 rounded-lg"
                         >
-                          <Text className="text-gray-700 font-medium">Cancel</Text>
+                          <Text className="text-gray-700 font-medium">
+                            Cancel
+                          </Text>
                         </TouchableOpacity>
                       </View>
                     </>
                   ) : (
                     <>
-                      <Text className="text-gray-800 leading-relaxed">{note.text}</Text>
+                      <Text className="text-gray-800 leading-relaxed">
+                        {note.text}
+                      </Text>
                       <Text className="text-gray-500 text-xs mt-2">
                         {new Date(note.createdAt).toLocaleString()}
                       </Text>
@@ -414,22 +436,40 @@ const LeadDetailsScreen = ({ route, navigation }) => {
                           onPress={() => handleEditNote(note._id, note.text)}
                           className="flex-row items-center mr-4"
                         >
-                          <Ionicons name="create-outline" size={16} color="#3B82F6" />
-                          <Text className="text-blue-500 ml-1 text-sm">Edit</Text>
+                          <Ionicons
+                            name="create-outline"
+                            size={16}
+                            color="#3B82F6"
+                          />
+                          <Text className="text-blue-500 ml-1 text-sm">
+                            Edit
+                          </Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                           onPress={() => handleDeleteNote(note._id)}
                           className="flex-row items-center mr-4"
                         >
-                          <Ionicons name="trash-outline" size={16} color="#EF4444" />
-                          <Text className="text-red-500 ml-1 text-sm">Delete</Text>
+                          <Ionicons
+                            name="trash-outline"
+                            size={16}
+                            color="#EF4444"
+                          />
+                          <Text className="text-red-500 ml-1 text-sm">
+                            Delete
+                          </Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                           onPress={() => handleShareNote(note)}
                           className="flex-row items-center"
                         >
-                          <Ionicons name="share-outline" size={16} color="#10B981" />
-                          <Text className="text-green-500 ml-1 text-sm">Share</Text>
+                          <Ionicons
+                            name="share-outline"
+                            size={16}
+                            color="#10B981"
+                          />
+                          <Text className="text-green-500 ml-1 text-sm">
+                            Share
+                          </Text>
                         </TouchableOpacity>
                       </View>
                     </>
@@ -438,7 +478,11 @@ const LeadDetailsScreen = ({ route, navigation }) => {
               ))
             ) : (
               <View className="bg-gray-50 p-8 rounded-lg items-center justify-center">
-                <Ionicons name="document-text-outline" size={40} color="#9CA3AF" />
+                <Ionicons
+                  name="document-text-outline"
+                  size={40}
+                  color="#9CA3AF"
+                />
                 <Text className="text-gray-500 mt-2 text-center">
                   No notes available. Add your first note above.
                 </Text>
