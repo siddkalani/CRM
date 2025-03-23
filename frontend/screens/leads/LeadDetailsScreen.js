@@ -88,8 +88,6 @@ const LeadDetailsScreen = ({ route, navigation }) => {
       console.warn("📛 Document picking failed:", error);
     }
   };
-  
-  
 
   const handleAddNote = async () => {
     if (!newNote.trim()) return;
