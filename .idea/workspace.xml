@@ -5,12 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="94494744-d11b-43b0-96fb-eac366c7fbb8" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/backend/config/s3Config.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/config/s3Config.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/controller/leadController.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/controller/leadController.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/middleware/errorHandler.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/middleware/errorHandler.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/models/fileModel.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/routes/leadRoutes.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/routes/leadRoutes.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/screens/leads/LeadDetailsScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/screens/leads/LeadDetailsScreen.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/constants/constant.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/constants/constant.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -41,7 +37,7 @@
     "cf.first.check.clang-format": "false",
     "cidr.known.project.marker": "true",
     "com.android.tools.idea.streaming.zoom.toolbar.visible": "false",
-    "git-widget-placeholder": "Merging main",
+    "git-widget-placeholder": "main",
     "kotlin-language-version-configured": "true",
     "settings.editor.selected.configurable": "trusted.hosts"
   }
