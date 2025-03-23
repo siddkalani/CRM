@@ -1,6 +1,5 @@
 const asyncHandler = require('express-async-handler');
 const Contact = require('../models/contactModel');
-const File = require('../models/fileModel');
 
 const getContacts = asyncHandler(async (req, res) => {
   const { userId } = req.params;
@@ -55,34 +54,62 @@ const deleteContact = asyncHandler(async (req, res) => {
   res.status(200).json({ message: 'Contact deleted successfully.' });
 });
 
-const uploadContactFile = asyncHandler(async (req, res) => {
+const uploadContactNote = asyncHandler(async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ message: 'No file uploaded.' });
+    const { contactId } = req.params; // Get contactId from params
+    const { text } = req.body; // Get optional text from request body
+
+    // Ensure at least one of text or file is provided
+    if (!text && !req.file) {
+      return res.status(400).json({ message: 'No text or file provided.' });
     }
 
-    const fileUrl = req.file.location; // S3 file URL
-    const fileName = req.file.originalname; // Original file name
-    const fileType = req.file.mimetype; // File type (e.g., image/png, application/pdf)
+    // Find the contact
+    const contact = await Contact.findById(contactId);
+    if (!contact) {
+      return res.status(404).json({ message: 'Contact not found.' });
+    }
 
-    // Save file metadata to the database
-    const newFile = new File({
-      name: fileName,
-      url: fileUrl,
-      fileType,
-    });
+    // Ensure notes array exists
+    if (!Array.isArray(contact.notes)) {
+      contact.notes = [];
+    }
 
-    await newFile.save();
+    // Create a new note object
+    const note = {
+      createdAt: new Date(),
+    };
 
-    res.status(200).json({
-      message: 'File uploaded successfully.',
-      fileUrl,
+    // Add text if provided
+    if (text) {
+      note.text = text;
+    }
+
+    // Add file details if a file is uploaded
+    if (req.file) {
+      note.fileUrl = req.file.location; // File URL from S3
+      note.fileName = req.file.originalname; // Original file name
+      note.fileType = req.file.mimetype; // MIME type (e.g., image/png, application/pdf)
+    }
+
+    // Push the note to the notes array
+    contact.notes.push(note);
+
+    // Save the updated contact
+    await contact.save();
+
+    // Return success response
+    res.status(201).json({
+      message: 'Note added successfully.',
+      note,
+      contact,
     });
   } catch (error) {
-    console.error('Error uploading file:', error);
-    res.status(500).json({ message: 'File upload failed.', error: error.message });
+    console.error('Error adding note:', error);
+    res.status(500).json({ message: 'Failed to add note.', error: error.message });
   }
 });
+
 
 
 module.exports = {
@@ -91,5 +118,5 @@ module.exports = {
   getContactById,
   updateContact,
   deleteContact,
-  uploadContactFile
+  uploadContactNote
 };

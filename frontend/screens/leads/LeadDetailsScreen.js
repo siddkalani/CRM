@@ -86,11 +86,6 @@ const LeadDetailsScreen = ({ route, navigation }) => {
     if (!newNote.trim()) return;
 
     try {
-      // If you want to pass attachedDocument to your server along with the note,
-      // you’ll need to handle that in your backend. For example:
-      //  - Convert it to base64
-      //  - Or send it as a multipart/form-data
-
       const response = await fetch(`${BASE_URL}/api/lead/one/${leadId}/notes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

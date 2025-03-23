@@ -22,7 +22,6 @@ const upload = multer({
     s3: s3Client,
     bucket: process.env.AWS_S3_BUCKET_NAME || 'crm-documentss',
     contentType: multerS3.AUTO_CONTENT_TYPE,
-    acl: 'private', // Change to 'public-read' if needed
     metadata: (req, file, cb) => {
       cb(null, { fieldName: file.fieldname });
     },

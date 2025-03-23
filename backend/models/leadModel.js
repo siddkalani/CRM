@@ -16,15 +16,18 @@ const LeadSchema = new mongoose.Schema(
     company: { type: String },
     // Instead of a single string, use an array:
     notes: [
-      {
-        _id: {
-          type: mongoose.Schema.Types.ObjectId,
-          default: () => new mongoose.Types.ObjectId(),
-        },
-        text: { type: String },
-        createdAt: { type: Date, default: Date.now },
-      },
-    ],
+          {
+            _id: {
+              type: mongoose.Schema.Types.ObjectId,
+              default: () => new mongoose.Types.ObjectId(),
+            },
+            text: { type: String }, // For plain text notes
+            fileUrl: { type: String }, // URL of the uploaded file (if any)
+            fileName: { type: String }, // Name of the file
+            fileType: { type: String }, // Type of the file (e.g., image/png, application/pdf)
+            createdAt: { type: Date, default: Date.now }, // Timestamp
+          },
+        ],
   },
   { timestamps: true }
 );
