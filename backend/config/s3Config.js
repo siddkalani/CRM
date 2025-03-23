@@ -51,32 +51,3 @@ const upload = multer({
 
 module.exports = upload;
 
-
-// const AWS = require('aws-sdk');
-// const fs = require('fs');
-// const dotenv = require('dotenv');
-
-// dotenv.config();
-
-// AWS.config.update({
-//   accessKeyId: 'AKIA25UHESYHP442MHQV',
-//   secretAccessKey: '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',
-//   region: 'eu-north-1',
-// });
-
-// const s3 = new AWS.S3();
-
-// const fileContent = fs.readFileSync('../Datamate.png'); // Replace with a valid test file path
-// const params = {
-//   Bucket: 'crm-documentss',
-//   Key: 'Datamate.png', // File name
-//   Body: fileContent,
-// };
-
-// s3.upload(params, (err, data) => {
-//   if (err) {
-//     console.error('S3 Upload Error:', err);
-//   } else {
-//     console.log('S3 Upload Success:', data);
-//   }
-// });
