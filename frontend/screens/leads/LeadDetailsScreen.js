@@ -69,15 +69,27 @@ const LeadDetailsScreen = ({ route, navigation }) => {
       const result = await DocumentPicker.getDocumentAsync({
         type: "*/*",
         copyToCacheDirectory: true,
+        multiple: false, // just to be safe
       });
-      if (result.type === "success") {
-        console.log("Document picked:", result.uri);
-        setAttachedDocument(result);
+  
+      console.log("🎯 PICKED DOCUMENT RESULT:", JSON.stringify(result, null, 2));
+  
+      if (!result.canceled && result.assets?.length) {
+        const doc = result.assets[0];
+  
+        // Fallback name if needed
+        if (!doc.name) {
+          doc.name = doc.uri.split("/").pop();
+        }
+  
+        setAttachedDocument(doc); // 👈 this was the missing piece
       }
     } catch (error) {
-      console.warn("Document picking failed:", error);
+      console.warn("📛 Document picking failed:", error);
     }
   };
+  
+  
 
   const handleAddNote = async () => {
     if (!newNote.trim()) return;
@@ -311,15 +323,29 @@ const LeadDetailsScreen = ({ route, navigation }) => {
 
             {/* Document attachment & buttons */}
             <View className="mt-3">
-              {attachedDocument && (
-                <View className="bg-blue-50 p-2 rounded-lg mb-3 flex-row items-center">
-                  <Ionicons name="document-attach" size={18} color="#3B82F6" />
-                  <Text className="text-blue-600 ml-2 flex-1">{attachedDocument.name}</Text>
-                  <TouchableOpacity onPress={() => setAttachedDocument(null)}>
-                    <Ionicons name="close-circle" size={20} color="#6B7280" />
-                  </TouchableOpacity>
-                </View>
-              )}
+            {attachedDocument && (
+  <View className="bg-blue-50 p-3 rounded-lg mb-4">
+    <View className="flex-row items-center justify-between">
+      <Ionicons name="document-attach" size={18} color="#3B82F6" />
+      <Text className="text-blue-600 ml-2 flex-1 truncate">
+        {attachedDocument.name || 'Unnamed Document'}
+      </Text>
+      <TouchableOpacity onPress={() => setAttachedDocument(null)}>
+        <Ionicons name="close-circle" size={20} color="#6B7280" />
+      </TouchableOpacity>
+    </View>
+
+    {/* Show preview if it's an image */}
+    {attachedDocument.mimeType?.startsWith("image/") && (
+      <Image
+        source={{ uri: attachedDocument.uri }}
+        className="w-24 h-24 mt-3 rounded-md bg-gray-200"
+        resizeMode="cover"
+      />
+    )}
+  </View>
+)}
+
               
               <View className="flex-row">
                 <TouchableOpacity
