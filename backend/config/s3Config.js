@@ -1,43 +1,82 @@
-const AWS = require('aws-sdk');
+const { S3Client } = require('@aws-sdk/client-s3');
 const multer = require('multer');
 const multerS3 = require('multer-s3');
 const path = require('path');
+const { v4: uuidv4 } = require('uuid');
+const dotenv = require('dotenv');
+const asyncHandler = require('express-async-handler');
+dotenv.config();
 
-// Configure AWS SDK
-AWS.config.update({
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  region: 'us-east-1', // Replace with your region
+// AWS SDK v3 Configuration
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  }
 });
 
-// Create S3 instance
-const s3 = new AWS.S3();
-
-// Multer configuration for S3
+// Create upload middleware
 const upload = multer({
   storage: multerS3({
-    s3: s3,
-    bucket: 'my-app-bucket', // Replace with your bucket name
+    s3: s3Client,
+    bucket: process.env.AWS_S3_BUCKET_NAME || 'default-bucket-name',
+    contentType: multerS3.AUTO_CONTENT_TYPE,
+    acl: 'private', // Change to 'public-read' if needed
     metadata: (req, file, cb) => {
       cb(null, { fieldName: file.fieldname });
     },
     key: (req, file, cb) => {
-      const fileName = `${Date.now()}-${file.originalname}`;
-      cb(null, fileName); // File name in S3
+      const timestamp = Date.now();
+      const safeFileName = file.originalname
+        .toLowerCase()
+        .replace(/[^a-z0-9.]/g, '-'); // Sanitize filename
+      const fileName = `${timestamp}-${uuidv4()}-${safeFileName}`;
+      cb(null, fileName);
     },
   }),
   fileFilter: (req, file, cb) => {
-    const fileTypes = /jpeg|jpg|png|pdf/; // Allowed file types
+    const fileTypes = /jpeg|jpg|png|pdf|doc|docx|xls|xlsx/;
     const extName = fileTypes.test(path.extname(file.originalname).toLowerCase());
     const mimeType = fileTypes.test(file.mimetype);
-
     if (extName && mimeType) {
       cb(null, true);
     } else {
-      cb(new Error('Only images and PDFs are allowed.'));
+      cb(new Error('Only JPEG, PNG, PDF, DOC, DOCX, XLS, and XLSX files are allowed.'));
     }
   },
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB file size limit
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB limit
 });
 
+
 module.exports = upload;
+
+
+// const AWS = require('aws-sdk');
+// const fs = require('fs');
+// const dotenv = require('dotenv');
+
+// dotenv.config();
+
+// AWS.config.update({
+//   accessKeyId: 'AKIA25UHESYHP442MHQV',
+//   secretAccessKey: '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',
+//   region: 'eu-north-1',
+// });
+
+// const s3 = new AWS.S3();
+
+// const fileContent = fs.readFileSync('../Datamate.png'); // Replace with a valid test file path
+// const params = {
+//   Bucket: 'crm-documentss',
+//   Key: 'Datamate.png', // File name
+//   Body: fileContent,
+// };
+
+// s3.upload(params, (err, data) => {
+//   if (err) {
+//     console.error('S3 Upload Error:', err);
+//   } else {
+//     console.log('S3 Upload Success:', data);
+//   }
+// });

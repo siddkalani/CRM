@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const asyncHandler = require('express-async-handler');
-const uploadm = require('../config/s3Config');
+const upload = require('../config/s3Config');
 
 
 // IMPORTANT: Make sure to import the Contact model for the notes routes
@@ -17,37 +17,20 @@ const {
   uploadContactFile
 } = require('../controller/contactController');
 
-/**
- * =======================
- *  User-based contacts
- * =======================
- * GET  /api/contact/user/:userId   -> getContacts
- * POST /api/contact/user/:userId   -> addContact
- */
+
 router
   .route('/user/:userId')
   .get(getContacts)
   .post(addContact);
-
-/**
- * ================================
- *  Single contact (by contactId)
- * ================================
- * GET    /api/contact/one/:contactId -> getContactById
- * PUT    /api/contact/one/:contactId -> updateContact
- * DELETE /api/contact/one/:contactId -> deleteContact
- */
 router
   .route('/one/:contactId')
   .get(getContactById)
   .put(updateContact)
   .delete(deleteContact);
 
-/**
- * ==========================
- *  NOTES: CREATE / UPDATE / DELETE
- * ==========================
- */
+  router
+  .route('/upload')
+  .post(upload.single('file'), uploadContactFile);
 
 // 1) CREATE a new note
 // POST /api/contact/one/:contactId/notes
