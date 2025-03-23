@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const asyncHandler = require('express-async-handler');
-const upload = require('../config/s3Config');
+const {upload} = require('../config/s3Config');
 
 
 // IMPORTANT: Make sure to import the Contact model for the notes routes
@@ -36,34 +36,11 @@ router
   
 
 
-// 1) CREATE a new note
-// POST /api/contact/one/:contactId/notes
-// router.post(
-//   '/one/:contactId/notes',
-//   asyncHandler(async (req, res) => {
-//     const { text } = req.body;
-//     // 1. Find the contact
-//     const contact = await Contact.findById(req.params.contactId);
-//     if (!contact) {
-//       return res.status(404).json({ error: 'Contact not found' });
-//     }
 
-//     // 2. Ensure notes array
-//     if (!Array.isArray(contact.notes)) {
-//       contact.notes = [];
-//     }
-
-//     // 3. Add the new note
-//     contact.notes.push({ text, createdAt: new Date() });
-
-//     // 4. Save and return
-//     await contact.save();
-//     res.json(contact);
-//   })
-// );
 
 // 2) UPDATE a specific note
 // PUT /api/contact/one/:contactId/notes/:noteId
+
 router.put(
   '/one/:contactId/notes/:noteId',
   asyncHandler(async (req, res) => {
