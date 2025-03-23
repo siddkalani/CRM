@@ -155,9 +155,9 @@ const LeadsScreen = ({ navigation }) => {
       <View className="flex-row items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-50">
         <Text className="font-bold text-blue-600">All Leads</Text>
         <View className="flex-row">
-          <TouchableOpacity className="ml-2 p-1">
+          {/* <TouchableOpacity className="ml-2 p-1">
             <Ionicons name="filter-outline" size={20} color="#4B5563" />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           <TouchableOpacity className="ml-2 p-1" onPress={fetchLeads}>
             <Ionicons name="refresh-outline" size={20} color="#4B5563" />
           </TouchableOpacity>

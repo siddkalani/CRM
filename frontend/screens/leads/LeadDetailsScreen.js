@@ -222,7 +222,7 @@ const LeadDetailsScreen = ({ route, navigation }) => {
       <ScrollView className="flex-1">
         <View className="p-4">
           {/* Lead Info Card */}
-          <View className="bg-blue-50 rounded-xl p-4 mb-4 shadow-sm">
+        <View className="bg-blue-50 rounded-xl p-4 mb-4 shadow-sm">
   <View className="flex-row items-center">
     {/* Left: Details */}
     <View className="flex-1 pr-4">
