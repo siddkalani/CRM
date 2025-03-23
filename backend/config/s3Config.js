@@ -20,7 +20,7 @@ const s3Client = new S3Client({
 const upload = multer({
   storage: multerS3({
     s3: s3Client,
-    bucket: process.env.AWS_S3_BUCKET_NAME || 'default-bucket-name',
+    bucket: process.env.AWS_S3_BUCKET_NAME || 'crm-documentss',
     contentType: multerS3.AUTO_CONTENT_TYPE,
     acl: 'private', // Change to 'public-read' if needed
     metadata: (req, file, cb) => {
