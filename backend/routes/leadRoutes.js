@@ -10,7 +10,7 @@ const {
   deleteLead,
 uploadLeadNote
 } = require('../controller/leadController');
-
+const {handleMulterError} = require('../middleware/errorHandler');
 
 router
   .route('/user/:userId')
