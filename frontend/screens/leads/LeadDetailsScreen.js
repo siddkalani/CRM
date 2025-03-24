@@ -34,6 +34,9 @@ const LeadDetailsScreen = ({ route, navigation }) => {
   const [attachedDocument, setAttachedDocument] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false); // <-- Loading state
 
+    const [isEditing, setIsEditing] = useState(false);
+    const [editedDetails, setEditedDetails] = useState({});
+
   // Voice from context
   const {
     isRecording,
@@ -221,6 +224,53 @@ const LeadDetailsScreen = ({ route, navigation }) => {
     }
   };
 
+   const handleEditLeadDetails = () => {
+      // Initialize editing with current lead details
+      setEditedDetails({
+        firstName: leadDetails.firstName,
+        lastName: leadDetails.lastName,
+        email: leadDetails.email,
+        phone: leadDetails.phone,
+        company: leadDetails.company || ''
+      });
+      setIsEditing(true);
+    };
+  
+    // Function to save edited lead details
+    const saveLeadDetails = async () => {
+      try {
+        setIsSubmitting(true);
+        const response = await fetch(`${BASE_URL}/api/lead/one/${leadId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(editedDetails)
+        });
+  
+        if (!response.ok) {
+          throw new Error('Failed to update lead details');
+        }
+  
+        const updatedLead = await response.json();
+        
+        // Update lead details in state
+        setLeadDetails(updatedLead);
+        
+        // Exit editing mode
+        setIsEditing(false);
+        
+        // Show success alert
+        Alert.alert('Success', 'Lead details updated successfully');
+      } catch (error) {
+        console.error('Error updating lead details:', error);
+        Alert.alert('Error', 'Failed to update lead details');
+      } finally {
+        setIsSubmitting(false);
+      }
+    };
+  
+
   const handleSearchChange = (text) => {
     setSearchText(text);
     filterNotes(text, leadDetails.notes || []);
@@ -240,10 +290,35 @@ const LeadDetailsScreen = ({ route, navigation }) => {
 
   const handleShareNote = async (note) => {
     try {
-      await Share.share({
-        message: note.text,
-        title: "Share Note",
-      });
+      // Format the date
+      const formattedDate = new Date(note.createdAt).toLocaleString();
+  
+      // Prepare the comprehensive share message
+      let shareMessage = `Lead Details:\n`;
+      shareMessage += `Name: ${leadDetails.firstName} ${leadDetails.lastName}\n`;
+      shareMessage += `Email: ${leadDetails.email}\n`;
+      shareMessage += `Phone: ${leadDetails.phone}\n\n`;
+  
+      shareMessage += `Note Details:\n`;
+      shareMessage += `Date: ${formattedDate}\n`;
+      shareMessage += `Note: ${note.text || 'No text'}\n\n`;
+  
+      // If there's a file attachment, add file details to the share message
+      if (note.fileUrl) {
+        shareMessage += `Attachment:\n`;
+        shareMessage += `File Name: ${note.fileName || 'Unnamed Document'}\n`;
+        shareMessage += `File URL: ${note.fileUrl}\n`;
+      }
+  
+      // Additional platform-specific sharing options
+      const shareOptions = {
+        message: shareMessage,
+        title: `Note for ${leadDetails.firstName} ${leadDetails.lastName}`,
+        url: note.fileUrl, // For platforms that support file sharing
+      };
+  
+      // Try to share with comprehensive information
+      await Share.share(shareOptions);
     } catch (error) {
       console.error("Error sharing note:", error);
       Alert.alert("Error", "Failed to share the note.");
