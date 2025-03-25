@@ -6,12 +6,13 @@
   <component name="ChangeListManager">
     <list default="true" id="94494744-d11b-43b0-96fb-eac366c7fbb8" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/controller/leadController.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/controller/leadController.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/screens/contacts/ContactDetailScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/screens/contacts/ContactDetailScreen.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/screens/contacts/ContactScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/screens/contacts/ContactScreen.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/screens/leads/AddLeadScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/screens/leads/AddLeadScreen.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/screens/leads/LeadDetailsScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/screens/leads/LeadDetailsScreen.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/screens/leads/LeadsScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/screens/leads/LeadsScreen.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/.yarn/install-state.gz" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/.yarn/install-state.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/android/app/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/android/app/src/main/AndroidManifest.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/android/app/src/main/res/values/strings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/android/app/src/main/res/values/strings.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/app.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/app.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/ios/DataMate/Supporting/Expo.plist" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/ios/DataMate/Supporting/Expo.plist" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/yarn.lock" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/yarn.lock" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
