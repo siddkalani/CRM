@@ -28,13 +28,18 @@ router
   .put(updateContact)
   .delete(deleteContact);
 
+  // router.post(
+  //   '/one/:contactId/notes', // No need for noteId in this route
+  //   upload.single('file'), // Middleware for handling file uploads
+  //   uploadContactNote
+  // );
+  
   router.post(
-    '/one/:contactId/notes', // No need for noteId in this route
-    upload.single('file'), // Middleware for handling file uploads
+    '/one/:leadId/notes', // No need for noteId in this route
+    upload.array('files',20), // Middleware for handling file uploads
     uploadContactNote
   );
   
-
 
 
 

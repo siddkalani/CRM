@@ -15,7 +15,7 @@ const {handleMulterError} = require('../middleware/errorHandler');
 router
   .route('/user/:userId')
   .get(getLeads)    // GET all leads for user
-  .post(addLead);   // CREATE a lead for user
+  .post(addLead);  // CREATE a lead for user
 
 router
   .route('/one/:leadId')
@@ -23,9 +23,15 @@ router
   .put(updateLead);    // UPDATE a single lead
 
 
+  // router.post(
+  //   '/one/:leadId/notes', // No need for noteId in this route
+  //   upload.single('file'), // Middleware for handling file uploads
+  //   uploadLeadNote
+  // );
+  
   router.post(
     '/one/:leadId/notes', // No need for noteId in this route
-    upload.single('file'), // Middleware for handling file uploads
+    upload.array('files',20), // Middleware for handling file uploads
     uploadLeadNote
   );
   

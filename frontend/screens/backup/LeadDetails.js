@@ -240,7 +240,7 @@ const LeadDetailsScreen = ({ route, navigation }) => {
     const saveLeadDetails = async () => {
       try {
         setIsSubmitting(true);
-        const response = await fetch(`${BASE_URL}/api/lead/update/${leadId}`, {
+        const response = await fetch(`${BASE_URL}/api/lead/one/${leadId}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
