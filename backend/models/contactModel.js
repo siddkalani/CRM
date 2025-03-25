@@ -25,18 +25,23 @@ const contactSchema = new mongoose.Schema(
       // required: [true, 'Please add phone'],
     },
     notes: [
-      {
-        _id: {
-          type: mongoose.Schema.Types.ObjectId,
-          default: () => new mongoose.Types.ObjectId(),
-        },
-        text: { type: String }, // For plain text notes
-        fileUrl: { type: String }, // URL of the uploaded file (if any)
-        fileName: { type: String }, // Name of the file
-        fileType: { type: String }, // Type of the file (e.g., image/png, application/pdf)
-        createdAt: { type: Date, default: Date.now }, // Timestamp
-      },
-    ],
+          {
+            _id: {
+              type: mongoose.Schema.Types.ObjectId,
+              default: () => new mongoose.Types.ObjectId(),
+            },
+            text: { type: String }, // For plain text notes
+            files: [
+              {
+                fileUrl: { type: String }, // URL of the uploaded file
+                fileName: { type: String }, // Original name of the file
+                fileType: { type: String }, // MIME type of the file
+                fileSize: { type: Number }, // Size of the file in bytes
+              },
+            ],
+            createdAt: { type: Date, default: Date.now }, // Timestamp
+          },
+        ],
   },
   {
     timestamps: true,

@@ -33,6 +33,8 @@ const ContactDetailsScreen = ({ route, navigation }) => {
   const [attachedDocument, setAttachedDocument] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+    const [isEditing, setIsEditing] = useState(false);
+      const [editedDetails, setEditedDetails] = useState({});
   // Voice context
   const { isRecording, recognizedText, setRecognizedText, startRecording, stopRecording } = useVoice();
 
@@ -179,6 +181,53 @@ const ContactDetailsScreen = ({ route, navigation }) => {
     }
   };
 
+  const handleEditContactDetails = () => {
+        // Initialize editing with current lead details
+        setEditedDetails({
+          firstName: contactDetails.firstName,
+          lastName: contactDetails.lastName,
+          email: contactDetails.email,
+          phone: contactDetails.phone,
+          company: contactDetails.company || ''
+        });
+        setIsEditing(true);
+      };
+    
+      // Function to save edited lead details
+      const saveContactDetails = async () => {
+        try {
+          setIsSubmitting(true);
+          const response = await fetch(`${BASE_URL}/api/lead/one/${leadId}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(editedDetails)
+          });
+    
+          if (!response.ok) {
+            throw new Error('Failed to update lead details');
+          }
+    
+          const updatedLead = await response.json();
+          
+          // Update lead details in state
+          setContactDetails(updatedLead);
+          
+          // Exit editing mode
+          setIsEditing(false);
+          
+          // Show success alert
+          Alert.alert('Success', 'Lead details updated successfully');
+        } catch (error) {
+          console.error('Error updating lead details:', error);
+          Alert.alert('Error', 'Failed to update lead details');
+        } finally {
+          setIsSubmitting(false);
+        }
+      };
+    
+
   // Edit note
   const handleEditNote = (noteId, currentText) => {
     setEditNoteId(noteId);
@@ -259,16 +308,41 @@ const ContactDetailsScreen = ({ route, navigation }) => {
   };
 
   const handleShareNote = async (note) => {
-    try {
-      await Share.share({
-        message: note.text,
-        title: "Share Note",
-      });
-    } catch (error) {
-      Alert.alert("Error", "Failed to share the note.");
-    }
-  };
-
+      try {
+        // Format the date
+        const formattedDate = new Date(note.createdAt).toLocaleString();
+    
+        // Prepare the comprehensive share message
+        let shareMessage = `Contact Details:\n`;
+        shareMessage += `Name: ${contactDetails.firstName} ${contactDetails.lastName}\n`;
+        shareMessage += `Email: ${contactDetails.email}\n`;
+        shareMessage += `Phone: ${contactDetails.phone}\n\n`;
+    
+        shareMessage += `Note Details:\n`;
+        shareMessage += `Date: ${formattedDate}\n`;
+        shareMessage += `Note: ${note.text || 'No text'}\n\n`;
+    
+        // If there's a file attachment, add file details to the share message
+        if (note.fileUrl) {
+          shareMessage += `Attachment:\n`;
+          shareMessage += `File Name: ${note.fileName || 'Unnamed Document'}\n`;
+          shareMessage += `File URL: ${note.fileUrl}\n`;
+        }
+    
+        // Additional platform-specific sharing options
+        const shareOptions = {
+          message: shareMessage,
+          title: `Note for ${contactDetails.firstName} ${contactDetails.lastName}`,
+          url: note.fileUrl, // For platforms that support file sharing
+        };
+    
+        // Try to share with comprehensive information
+        await Share.share(shareOptions);
+      } catch (error) {
+        console.error("Error sharing note:", error);
+        Alert.alert("Error", "Failed to share the note.");
+      }
+    };
   if (!contactDetails) {
     return (
       <GestureHandlerRootView className='flex-1'>
