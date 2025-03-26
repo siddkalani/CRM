@@ -31,7 +31,7 @@ router
   
   router.post(
     '/one/:leadId/notes', // No need for noteId in this route
-    upload.array('files',20), // Middleware for handling file uploads
+    upload.array('files',5), // Middleware for handling file uploads
     uploadLeadNote
   );
   
