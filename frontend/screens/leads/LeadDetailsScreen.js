@@ -676,8 +676,9 @@ const LeadDetailsScreen = ({ route, navigation }) => {
                             {/* Note text */}
                             {note.text && (
                               <Text className="text-gray-800 leading-relaxed">
-                                {note.text}
-                              </Text>
+                              {"\u2022"}{" "}{note.text}
+                           </Text>
+                           
                             )}
 
                             {/* Files array */}
