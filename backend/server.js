@@ -4,11 +4,11 @@ const connectDb = require('./config/dbConnection');
 const dotenv = require('dotenv').config();
 const morgan = require('morgan');
 
-const contactRoutes = require('../backend/routes/contactRoutes');
-const userRoutes = require('../backend/routes/userRoutes');
-const otpRoutes = require('../backend/routes/otpRoutes');
-const leadRoutes = require('../backend/routes/leadRoutes');
-const speechRoutes = require('../backend/routes/speechRoute'); // <-- Added this line
+const contactRoutes = require('./routes/contactRoutes');
+const userRoutes = require('./routes/userRoutes');
+const otpRoutes = require('./routes/otpRoutes');
+const leadRoutes = require('./routes/leadRoutes');
+const speechRoutes = require('./routes/speechRoute'); // <-- Added this line
 
 const cors = require('cors');
 
