@@ -29,6 +29,6 @@ app.use('/api/lead', leadRoutes);
 app.use('/api', speechRoutes); // <-- Added this line
 app.use(errorHandler);
 
-app.listen(port, () => {
+app.listen(port, '0.0.0.0', () => {
   console.log(`Server is running on port ${port}`);
 });

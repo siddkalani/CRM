@@ -1,6 +1,6 @@
 const asyncHandler = require('express-async-handler');
 const User = require('../models/userModell')
-const bcrypt = require("bcrypt")
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken')
 
 

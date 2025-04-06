@@ -1,0 +1,40 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "3002:3002"
+    volumes:
+      - ./backend:/app
+    env_file:
+      - ./backend/.env
+    working_dir: /app
+    environment:
+      - NODE_ENV=development
+    networks:
+      - app-network
+    restart: always
+    command: [ "node", "server.js" ]
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "19000:19000"
+      - "19001:19001"
+      - "19002:19002"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    working_dir: /app
+    stdin_open: true
+    tty: true
+    environment:
+      - NODE_ENV=development
+      - EXPO_NO_INTERACTIVE=true # 💥 this is important
+    restart: always
+    networks:
+      - app-network
+    command: [ "npm", "start" ]
+
+networks:
+  app-network:
+    driver: bridge

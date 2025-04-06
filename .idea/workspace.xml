@@ -4,7 +4,24 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="94494744-d11b-43b0-96fb-eac366c7fbb8" name="Changes" comment="" />
+    <list default="true" id="94494744-d11b-43b0-96fb-eac366c7fbb8" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.elasticbeanstalk/config.yml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/Dockerfile" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/docker-compose.yml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Screenshot_20250323_020354.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/config/s3Config.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/config/s3Config.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/controller/userController.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/controller/userController.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/yarn.lock" beforeDir="false" afterPath="$PROJECT_DIR$/backend/yarn.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/build-1742705169729.apk" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/constants/constant.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/constants/constant.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/yarn.lock" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/yarn.lock" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />

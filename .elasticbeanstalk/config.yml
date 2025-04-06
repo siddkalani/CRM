@@ -1,0 +1,5 @@
+branch-defaults:
+  main:
+    environment: crm-dev2
+global:
+  profile: eb-cli
