@@ -1,0 +1,34 @@
+name: EAS Android Build
+
+on:
+  push:
+    branches:
+      - main  # change this if you want to auto-build from another branch
+
+jobs:
+  build-android:
+    name: Build APK with EAS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v3
+
+      - name: 📦 Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: 📲 Install EAS CLI
+        run: npm install -g eas-cli
+
+      - name: 🔐 Authenticate with EAS
+        run: eas login --token ${{ secrets.EAS_TOKEN }}
+
+      - name: 🧱 Install dependencies
+        run: npm install
+        working-directory: ./frontend  # change if your app folder is different
+
+      - name: 🚀 Start EAS Android build
+        run: eas build --platform android --non-interactive --profile production
+        working-directory: ./frontend
