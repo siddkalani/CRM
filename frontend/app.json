@@ -22,7 +22,6 @@
         "backgroundColor": "#ffffff"
       },
       "permissions": [
-        "android.permission.RECORD_AUDIO",
         "android.permission.RECORD_AUDIO"
       ],
       "package": "com.siddharth2709.datamate"
@@ -48,6 +47,7 @@
     "runtimeVersion": "1.0.0",
     "updates": {
       "url": "https://u.expo.dev/1d5fbb0b-33fa-40e8-b54f-f5f9702f7ed7"
-    }
+    },
+    "owner": "siddharth2709"
   }
 }

@@ -3,7 +3,7 @@ name: EAS Android Build
 on:
   push:
     branches:
-      - main  # change this if you want to auto-build from another branch
+      - main
 
 jobs:
   build-android:
@@ -23,12 +23,14 @@ jobs:
         run: npm install -g eas-cli
 
       - name: 🔐 Authenticate with EAS
-        run: eas login --token ${{ secrets.EAS_TOKEN }}
+        env:
+          EAS_TOKEN: ${{ secrets.EAS_TOKEN }}
+        run: echo "✅ Auth set via EAS_TOKEN"
 
       - name: 🧱 Install dependencies
         run: npm install
-        working-directory: ./frontend  # change if your app folder is different
+        working-directory: ./frontend
 
-      - name: 🚀 Start EAS Android build
+      - name: 🚀 Trigger EAS Build
         run: eas build --platform android --non-interactive --profile production
         working-directory: ./frontend
