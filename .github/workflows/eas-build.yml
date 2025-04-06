@@ -24,7 +24,7 @@ jobs:
 
       - name: 🔐 Authenticate with EAS
         env:
-          EAS_TOKEN: ${{ secrets.EAS_TOKEN }}
+          EXPO_TOKEN: ${{ secrets.EAS_TOKEN }}
         run: echo "✅ Auth set via EAS_TOKEN"
 
       - name: 🧱 Install dependencies
