@@ -14,7 +14,7 @@ jobs:
       - name: 📥 Checkout code
         uses: actions/checkout@v3
 
-      - name:  Set up Node.js
+      - name: 📦 Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
@@ -22,10 +22,10 @@ jobs:
       - name: 📲 Install EAS CLI
         run: npm install -g eas-cli
 
-      - name: 🔐 Authenticate with EAS
+      - name: 🔐 Authenticate with Expo
+        run: echo "Using EXPO_TOKEN from secrets"
         env:
-          EXPO_TOKEN: ${{ secrets.EAS_TOKEN }}
-        run: echo "✅ Auth set via EAS_TOKEN"
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
       - name: 🧱 Install dependencies
         run: npm install
@@ -34,3 +34,5 @@ jobs:
       - name: 🚀 Trigger EAS Build
         run: eas build --platform android --non-interactive --profile production
         working-directory: ./frontend
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
