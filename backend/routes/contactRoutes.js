@@ -1,8 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const asyncHandler = require('express-async-handler');
-const {upload} = require('../config/s3Config');
-
+const { upload } = require('../config/s3Config');
 
 // IMPORTANT: Make sure to import the Contact model for the notes routes
 const Contact = require('../models/contactModel');
@@ -17,35 +16,26 @@ const {
   uploadContactNote
 } = require('../controller/contactController');
 
-
-router
-  .route('/user/:userId')
+// Routes for getting and adding contacts
+router.route('/user/:userId')
   .get(getContacts)
   .post(addContact);
-router
-  .route('/one/:contactId')
+
+// Routes for getting, updating, and deleting a specific contact
+router.route('/one/:contactId')
   .get(getContactById)
   .put(updateContact)
   .delete(deleteContact);
 
-  // router.post(
-  //   '/one/:contactId/notes', // No need for noteId in this route
-  //   upload.single('file'), // Middleware for handling file uploads
-  //   uploadContactNote
-  // );
-  
-  router.post(
-    '/one/:leadId/notes', // No need for noteId in this route
-    upload.array('files',20), // Middleware for handling file uploads
-    uploadContactNote
-  );
-  
+// Corrected POST route to add a note for a contact
+// Now it uses the correct :contactId in the URL, which matches the `Contact` model logic.
+router.post(
+  '/one/:contactId/notes', // The correct route for adding notes to a contact
+  upload.array('files', 5), // Allow uploading up to 5 files
+  uploadContactNote // Middleware function to handle the file upload and adding notes
+);
 
-
-
-// 2) UPDATE a specific note
-// PUT /api/contact/one/:contactId/notes/:noteId
-
+// Route to update a specific note
 router.put(
   '/one/:contactId/notes/:noteId',
   asyncHandler(async (req, res) => {
@@ -61,17 +51,12 @@ router.put(
     }
 
     note.text = text;
-    // note.updatedAt = new Date(); // optional
     await contact.save();
     res.json(contact);
   })
 );
 
-//delete contact 
-router.route('/:contactId').delete(deleteContact)
-
-// 3) DELETE a specific note
-// DELETE /api/contact/one/:contactId/notes/:noteId
+// Route to delete a specific note
 router.delete(
   '/one/:contactId/notes/:noteId',
   asyncHandler(async (req, res) => {
@@ -85,5 +70,8 @@ router.delete(
     res.json(contact);
   })
 );
+
+// Delete a contact
+router.route('/:contactId').delete(deleteContact);
 
 module.exports = router;

@@ -114,23 +114,23 @@ const deleteContact = asyncHandler(async (req, res) => {
 const uploadContactNote = asyncHandler(async (req, res) => {
   console.log('Request body:', req.body);
   console.log('Request files:', req.files);
-  
-  try {
-    const { contactId } = req.params;
-    const { text } = req.body;
 
-    // Validate request
+  try {
+    const { contactId } = req.params; // Get the contactId from params
+    const { text } = req.body; // Get text from body
+
+    // Validate request - Ensure either text or files are provided
     if (!text && (!req.files || req.files.length === 0)) {
       return res.status(400).json({ message: 'No text or files provided.' });
     }
 
-    // Find the contact
+    // Find the contact by contactId
     const contact = await Contact.findById(contactId);
     if (!contact) {
       return res.status(404).json({ message: 'Contact not found.' });
     }
 
-    // Ensure notes array exists
+    // Ensure the notes array exists
     if (!Array.isArray(contact.notes)) {
       contact.notes = [];
     }
@@ -148,20 +148,20 @@ const uploadContactNote = asyncHandler(async (req, res) => {
     // Process files if uploaded
     if (req.files && req.files.length > 0) {
       note.files = req.files.map((file) => ({
-        fileUrl: file.location, // File URL from S3
+        fileUrl: file.location, // S3 URL of the uploaded file
         fileName: file.originalname, // Original file name
-        fileType: file.mimetype, // MIME type
-        fileSize: file.size, // File size
+        fileType: file.mimetype, // MIME type of the file
+        fileSize: file.size, // File size in bytes
       }));
     }
 
-    // Push the note to the notes array
+    // Push the note into the contact's notes array
     contact.notes.push(note);
 
-    // Save the updated contact
+    // Save the updated contact document
     await contact.save();
 
-    // Return success response
+    // Return success response with the updated contact
     res.status(201).json({
       message: 'Note added successfully.',
       note,
@@ -172,6 +172,8 @@ const uploadContactNote = asyncHandler(async (req, res) => {
     res.status(500).json({ message: 'Failed to add note.', error: error.message });
   }
 });
+
+
 
 
 module.exports = {

@@ -1,10 +1,10 @@
 import React, { useState, useCallback } from 'react';
-import { 
-  View, 
-  Text, 
-  FlatList, 
-  TouchableOpacity, 
-  Alert 
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -119,8 +119,8 @@ const ContactScreen = ({ navigation }) => {
 
       const matchedNotes = Array.isArray(contact.notes)
         ? contact.notes.filter((note) =>
-            note.text && note.text.toLowerCase().includes(lowerText)
-          )
+          note.text && note.text.toLowerCase().includes(lowerText)
+        )
         : [];
       if (fullName.includes(lowerText) || email.includes(lowerText) || matchedNotes.length > 0) {
         acc.push({ ...contact, matchedNotes });
@@ -235,11 +235,25 @@ const ContactScreen = ({ navigation }) => {
                   <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
                 </View>
                 {item.matchedNotes && item.matchedNotes.length > 0 && (
-                  <View className="mt-2 ml-12 pl-2 border-l-2 border-blue-200">
-                    {item.matchedNotes.map((note) => (
-                      <Text key={note._id} className="text-gray-600 text-sm my-1">
-                        {note.text}
-                      </Text>
+                  <View className="mt-2 ml-12">
+                    {item.matchedNotes.map((note, index) => (
+                      <View
+                        key={note._id}
+                        className={`
+                                            flex-row items-start 
+                                            p-2 rounded-md 
+                                            mb-1
+                                            ${index % 2 === 0 ? 'bg-blue-50' : 'bg-blue-100'}
+                                          `}
+                      >
+                        {/* optional numbering */}
+                        <Text className="text-blue-600 font-bold mr-2">
+                          {index + 1}.
+                        </Text>
+                        <Text className="text-gray-700 text-sm flex-1">
+                          {note.text}
+                        </Text>
+                      </View>
                     ))}
                   </View>
                 )}
